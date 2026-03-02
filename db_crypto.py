@@ -222,10 +222,9 @@ def load_encrypted_db(path: Path | None = None) -> dict:
             return data
 
         except InvalidToken:
-            # 키 불일치 (다른 PC에서 생성된 파일)
-            log.warning(
-                "암호화 DB 키 불일치 — 다른 PC에서 생성된 파일일 수 있습니다. "
-                "시드 DB로 폴백합니다."
+            # 키 불일치 (다른 PC에서 생성된 파일) 또는 파일 손상
+            log.error(
+                "암호화 DB 로드 실패(InvalidToken): 키 불일치 또는 파일 손상. 시드 DB로 폴백합니다."
             )
         except zlib.error as e:
             log.error("암호화 DB zlib 해제 실패: %s", e)

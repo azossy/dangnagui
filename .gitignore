@@ -12,6 +12,7 @@ app_settings.json.bak
 sites_config.json.bak
 .instance.lock
 *.code-workspace
+sites_db.enc
 Fixit.txt
 fixok.txt
 _test.py

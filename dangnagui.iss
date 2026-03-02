@@ -1,6 +1,6 @@
 #define MyAppName "dangnagui"
 #define MyAppDisplayName "당나귀 게시판검색기"
-#define MyAppVersion "1.3.1"
+#define MyAppVersion "1.3.2"
 #define MyAppPublisher "Chally"
 #define MyAppURL "mailto:challychoi@me.com"
 #define MyAppExeName "dangnagui.exe"
@@ -16,7 +16,7 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppDisplayName}
 OutputDir=Output
-OutputBaseFilename=dangnagui-setup-v1.3.1
+OutputBaseFilename=dangnagui-setup-v1.3.2
 SetupIconFile=dangnagui.ico
 UninstallDisplayIcon={app}\dangnagui.ico
 Compression=lzma2/ultra64
@@ -30,6 +30,11 @@ ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName={#MyAppDisplayName}
 VersionInfoVersion={#MyAppVersion}.0
 VersionInfoCompany={#MyAppPublisher}
+VersionInfoDescription=당나귀 게시판검색기 - 국내 1,000+ 사이트 실시간 분석
+VersionInfoCopyright=Copyright (C) 2026 Chally
+VersionInfoProductName=당나귀 게시판검색기
+VersionInfoProductVersion={#MyAppVersion}.0
+VersionInfoProductTextVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

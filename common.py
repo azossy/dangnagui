@@ -66,7 +66,7 @@ log = setup_logger()
 # ═══════════════════════════════════════════════════
 #  상수
 # ═══════════════════════════════════════════════════
-APP_VERSION = "임금님귀 v1.3.1"
+APP_VERSION = "임금님귀 v1.3.2"
 COPYRIGHT = "copyright by 챠리"
 EMAIL = "challychoi@me.com"
 UPDATE_WARN_DAYS = 30
@@ -88,6 +88,9 @@ DEFAULT_REPORT_HEADER = (
 SETTINGS_FILE = BASE / "app_settings.json"
 SITES_CONFIG = BASE / "sites_config.json"
 
+# U-1: UI 스타일 가이드 (메인·설정·통계 창 톤 통일)
+# 다크 톤: 배경 #16161a(_DARK_BG), 카드 #1e1e2e(_DARK_CARD), 액센트 #0ea5e9
+# 새 위젯 추가 시 위 색상 및 common/main/stats_window의 COLORS/_DARK_* 상수 참고
 
 # ═══════════════════════════════════════════════════
 #  토픽 설정 → 검색용 config 변환 (DRY: run_report + format_for_messenger 공통)

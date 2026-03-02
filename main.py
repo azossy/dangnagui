@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-게시판 검색기 — 임금님귀 v1.3.1
+게시판 검색기 — 임금님귀 v1.3.2
 ═══════════════════════════════════════════════════════
 국내 1,000+ 사이트 / 60,000+ 게시판 실시간 분석
 광고/스팸 3중 필터 · 암호화 DB · 통계 대시보드 · PDF 내보내기
@@ -109,13 +109,14 @@ def run_report(progress_callback=None, settings=None, stop_event=None):
             region=APP_REGION,
             progress_callback=progress_callback,
             stop_event=stop_event,
+            max_results_per_topic=settings.get("max_results_per_topic", 0),
         )
 
         if stop_event and stop_event.is_set():
             return None, "중지됨", False
 
         if not data.get("카테고리"):
-            return None, "검색 결과가 없습니다.\n\n인터넷 연결을 확인하거나\npip install duckduckgo-search 를 실행하세요.", False
+            return None, "검색 결과가 없습니다.\n\n인터넷 연결을 확인하거나\npip install ddgs 를 실행하세요.", False
 
         # v1.3.0: Buzz Score 계산 추가 (통계 대시보드용)
         data = enrich_with_buzz_scores(data)
@@ -139,24 +140,32 @@ def run_report(progress_callback=None, settings=None, stop_event=None):
         return output, total, clip_ok
     except Exception as e:
         log.error("Report generation failed: %s", e)
-        return None, str(e), False
+        return (
+            None,
+            "검색 중 오류가 발생했습니다. 로그 파일(logs/app.log)을 확인해 주세요.",
+            False,
+        )
 
 
 # ═══════════════════════════════════════════════════
 #  설정 창
 # ═══════════════════════════════════════════════════
 def _open_settings_window(parent, on_settings_saved=None):
+    import json
     import tkinter as tk
-    from tkinter import messagebox, ttk
+    from tkinter import messagebox, ttk, filedialog
     try:
         from app_settings import (
             load_settings, save_settings,
+            get_settings_for_export, normalize_imported_settings,
             find_related_sites_for_topic, find_related_sites_via_web_search,
             get_related_sites_for_default_topic,
         )
     except ImportError:
         load_settings = lambda: get_settings()
         save_settings = lambda _: True
+        get_settings_for_export = lambda s: s
+        normalize_imported_settings = lambda d: d
         find_related_sites_for_topic = lambda _: []
         find_related_sites_via_web_search = lambda _: []
         get_related_sites_for_default_topic = lambda _: []
@@ -172,17 +181,18 @@ def _open_settings_window(parent, on_settings_saved=None):
         check_sample_urls = lambda **kw: -1
         count_unique_domains = lambda _: (0, 0)
 
-    # ── 색상·글꼴 ──
+    # ── 색상·글꼴 (메인/통계 창과 동일 고급 다크 톤) ──
     C = {
-        "bg": "#1e1e1e", "sf": "#252526", "sf2": "#2d2d30", "inp": "#3c3c3c",
-        "bdr": "#3f3f46", "bdr_a": "#0078d4",
-        "tx": "#d4d4d4", "tx2": "#969696", "tx3": "#6e6e6e",
-        "ac": "#0078d4", "ac_h": "#1a8ad4",
-        "sel": "#0a2e4f", "sel_fg": "#a8d4ff",
-        "red": "#d13438", "green": "#107c10",
+        "bg": "#16161a", "sf": "#1c1c21", "sf2": "#232328", "inp": "#27272a",
+        "bdr": "#3f3f46", "bdr_a": "#0ea5e9",
+        "tx": "#e4e4e7", "tx2": "#a1a1aa", "tx3": "#71717a",
+        "ac": "#0ea5e9", "ac_h": "#0384c7",
+        "sel": "#0c4a6e", "sel_fg": "#7dd3fc",
+        "red": "#ef4444", "green": "#059669",
+        "accent_line": "#0ea5e9",
     }
     F = {
-        "h1": ("Segoe UI", 12, "bold"), "h2": ("Segoe UI", 10, "bold"),
+        "h1": ("Segoe UI Semibold", 12), "h2": ("Segoe UI Semibold", 10),
         "body": ("Segoe UI", 10), "sm": ("Segoe UI", 9), "xs": ("Segoe UI", 8),
         "btn": ("Segoe UI", 10, "bold"), "icon": ("Segoe UI Emoji", 12),
     }
@@ -190,8 +200,8 @@ def _open_settings_window(parent, on_settings_saved=None):
     # ── 윈도우 ──
     win = tk.Toplevel(parent)
     win.title("설정 — 게시판 검색기")
-    win.geometry("920x560")
-    win.minsize(720, 440)
+    win.geometry("940x580")
+    win.minsize(740, 460)
     win.configure(bg=C["bg"])
     win.transient(parent)
 
@@ -296,6 +306,12 @@ def _open_settings_window(parent, on_settings_saved=None):
             settings["hours"] = max(30, min(100, int(hours_var.get())))
         except (ValueError, TypeError):
             settings["hours"] = DEFAULT_HOURS
+        try:
+            mrp = int(max_results_var.get() or 0)
+            settings["max_results_per_topic"] = mrp if mrp in (0, 50, 100, 200) else 0
+        except (ValueError, TypeError):
+            settings["max_results_per_topic"] = 0
+        settings["pdf_default_dir"] = (pdf_default_dir_var.get() or "").strip()
         _sync_spin_to_settings()
         _sync_header_to_settings()
         for t in settings["topics"] + settings["custom_topics"]:
@@ -314,6 +330,7 @@ def _open_settings_window(parent, on_settings_saved=None):
             _toast("✗ 저장에 실패했습니다", "red")
 
     def _close_win(*_):
+        # 저장 여부 확인: dirty 플래그가 True일 때만 저장 확인 메시지 표시 (A-2 검증)
         if dirty[0]:
             ans = messagebox.askyesnocancel(
                 "설정 변경",
@@ -327,6 +344,12 @@ def _open_settings_window(parent, on_settings_saved=None):
                     settings["hours"] = max(30, min(100, int(hours_var.get())))
                 except (ValueError, TypeError):
                     settings["hours"] = DEFAULT_HOURS
+                try:
+                    mrp = int(max_results_var.get() or 0)
+                    settings["max_results_per_topic"] = mrp if mrp in (0, 50, 100, 200) else 0
+                except (ValueError, TypeError):
+                    settings["max_results_per_topic"] = 0
+                settings["pdf_default_dir"] = (pdf_default_dir_var.get() or "").strip()
                 _sync_spin_to_settings()
                 _sync_header_to_settings()
                 for t in settings["topics"] + settings["custom_topics"]:
@@ -346,19 +369,25 @@ def _open_settings_window(parent, on_settings_saved=None):
             pass
         win.destroy()
 
-    # ══ 우측 패널 ══
-    right = tk.Frame(win, bg=C["sf"], width=230)
+    # ══ 우측 패널 (고급 카드 스타일) ══
+    right = tk.Frame(win, bg=C["sf"], width=240)
     right.pack(side=tk.RIGHT, fill=tk.Y)
     right.pack_propagate(False)
     tk.Frame(right, bg=C["bdr"], width=1).pack(side=tk.LEFT, fill=tk.Y)
-    rp = tk.Frame(right, bg=C["sf"], padx=14, pady=12)
+    rp = tk.Frame(right, bg=C["sf"], padx=16, pady=14)
     rp.pack(fill=tk.BOTH, expand=True)
 
+    # 우측 상단 액센트 바 + 제목
+    rp_header = tk.Frame(rp, bg=C["sf"])
+    rp_header.pack(fill=tk.X, pady=(0, 8))
+    _bar = tk.Frame(rp_header, width=3, bg=C["accent_line"], height=16)
+    _bar.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
+    _bar.pack_propagate(False)
     g_s, g_b = get_site_board_counts()
     n_en = sum(1 for n in ordered_names if selected.get(n, True))
     right_var = tk.StringVar(value=f"{n_en}개 토픽 · {g_s:,}개 사이트\n{g_b:,}개 게시판")
-    tk.Label(rp, text="검색 대상", font=F["h1"], fg=C["tx"], bg=C["sf"]).pack(anchor=tk.W, pady=(0, 4))
-    tk.Label(rp, textvariable=right_var, font=F["body"], fg=C["tx"], bg=C["sf"], justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 6))
+    tk.Label(rp_header, text="검색 대상", font=F["h1"], fg=C["tx"], bg=C["sf"]).pack(anchor=tk.W)
+    tk.Label(rp, textvariable=right_var, font=F["body"], fg=C["tx"], bg=C["sf"], justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 8))
 
     vr = settings.get("valid_rate", -1)
     valid_var = tk.StringVar(value=f"유효 접속율 {vr}%" if vr >= 0 else "유효 접속율 미확인")
@@ -372,7 +401,7 @@ def _open_settings_window(parent, on_settings_saved=None):
         try:
             days = (datetime.now() - datetime.fromisoformat(last_d)).days
             if days >= UPDATE_WARN_DAYS:
-                tk.Label(rp, text=f"⚠ {days}일 경과 — 갱신 권장", font=F["xs"], fg="#ff8c00", bg=C["sf"]).pack(anchor=tk.W, pady=(0, 4))
+                tk.Label(rp, text=f"⚠ {days}일 경과 — 갱신 권장", font=F["xs"], fg="#f59e0b", bg=C["sf"]).pack(anchor=tk.W, pady=(0, 4))
         except Exception:
             pass
 
@@ -607,28 +636,100 @@ def _open_settings_window(parent, on_settings_saved=None):
         h = max(bf.winfo_reqheight() + 90, 280)
         dlg.geometry(f"420x{h}")
 
-    tb = tk.Button(rp, text="🔄 사이트 갱신", font=F["btn"], fg="#fff", bg=C["ac"], activebackground=C["ac_h"], relief=tk.FLAT, cursor="hand2", command=on_track, pady=5)
+    tb = tk.Button(rp, text="  🔄 사이트 갱신  ", font=F["btn"], fg="#fff", bg=C["ac"], activebackground=C["ac_h"], relief=tk.FLAT, cursor="hand2", command=on_track, pady=6, padx=8)
     tb.pack(fill=tk.X)
     tb.bind("<Enter>", lambda e: tb.config(bg=C["ac_h"]))
     tb.bind("<Leave>", lambda e: tb.config(bg=C["ac"]))
 
+    # 추가개발-2: 설정 내보내기 / 설정 가져오기
+    def _do_export():
+        try:
+            settings["hours"] = max(30, min(100, int(hours_var.get())))
+        except (ValueError, TypeError):
+            settings["hours"] = DEFAULT_HOURS
+        _sync_header_to_settings()
+        for t in settings["topics"] + settings["custom_topics"]:
+            n = t.get("name")
+            if n:
+                t["enabled"] = selected.get(n, True)
+        settings["topic_order"] = list(ordered_names)
+        data = get_settings_for_export(settings)
+        path = filedialog.asksaveasfilename(
+            parent=win, title="설정 내보내기",
+            defaultextension=".json", filetypes=[("JSON 파일", "*.json"), ("모든 파일", "*.*")],
+        )
+        if path:
+            try:
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                _toast("✓ 설정을 저장했습니다")
+            except Exception as e:
+                log.error("설정 내보내기 실패: %s", e)
+                messagebox.showerror("내보내기 실패", str(e), parent=win)
+
+    def _do_import():
+        path = filedialog.askopenfilename(
+            parent=win, title="설정 가져오기",
+            filetypes=[("JSON 파일", "*.json"), ("모든 파일", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            log.error("설정 가져오기 로드 실패: %s", e)
+            messagebox.showerror("가져오기 실패", f"파일을 읽을 수 없습니다.\n{e}", parent=win)
+            return
+        if not messagebox.askyesno("설정 가져오기", "현재 설정을 덮어쓸까요?", parent=win):
+            return
+        norm = normalize_imported_settings(data)
+        settings.clear()
+        settings.update(norm)
+        all_t = norm.get("topics", []) + norm.get("custom_topics", [])
+        topic_order = norm.get("topic_order") or []
+        by_name = {t["name"]: t for t in all_t}
+        ordered_list = [by_name.pop(n) for n in topic_order if n in by_name]
+        ordered_list.extend(by_name.values())
+        ordered_names.clear()
+        ordered_names.extend([t["name"] for t in ordered_list])
+        selected.clear()
+        selected.update({t["name"]: t.get("enabled", True) for t in ordered_list})
+        hours_var.set(str(settings.get("hours", DEFAULT_HOURS)))
+        max_results_var.set(str(settings.get("max_results_per_topic", 0)))
+        pdf_default_dir_var.set(settings.get("pdf_default_dir") or "")
+        header_text.delete("1.0", tk.END)
+        header_text.insert("1.0", settings.get("report_header") or DEFAULT_REPORT_HEADER)
+        _rebuild_topic_list()
+        _mark_dirty()
+        _toast("✓ 설정을 가져왔습니다. 저장 버튼으로 적용하세요.")
+
+    exp_btn = tk.Button(rp, text="  📤 설정 내보내기  ", font=F["body"], fg=C["tx2"], bg=C["sf2"], activeforeground=C["ac"], relief=tk.FLAT, cursor="hand2", command=_do_export, pady=4, padx=8)
+    exp_btn.pack(fill=tk.X, pady=(4, 2))
+    exp_btn.bind("<Enter>", lambda e: exp_btn.config(bg=C["bdr"]))
+    exp_btn.bind("<Leave>", lambda e: exp_btn.config(bg=C["sf2"]))
+    imp_btn = tk.Button(rp, text="  📥 설정 가져오기  ", font=F["body"], fg=C["tx2"], bg=C["sf2"], activeforeground=C["ac"], relief=tk.FLAT, cursor="hand2", command=_do_import, pady=4, padx=8)
+    imp_btn.pack(fill=tk.X, pady=(0, 4))
+    imp_btn.bind("<Enter>", lambda e: imp_btn.config(bg=C["bdr"]))
+    imp_btn.bind("<Leave>", lambda e: imp_btn.config(bg=C["sf2"]))
+
     spacer = tk.Frame(rp, bg=C["sf"])
     spacer.pack(fill=tk.BOTH, expand=True)
 
-    tk.Frame(rp, bg=C["bdr"], height=1).pack(fill=tk.X, pady=(8, 8))
+    tk.Frame(rp, bg=C["bdr"], height=1).pack(fill=tk.X, pady=(10, 8))
     sb = tk.Button(
-        rp, text="💾 설정 저장 (Ctrl+S)", font=("Segoe UI", 11, "bold"),
-        fg="#fff", bg=C["green"], activebackground="#0e6b0e",
-        relief=tk.FLAT, cursor="hand2", command=do_save, pady=7,
+        rp, text="  💾 설정 저장 (Ctrl+S)  ", font=("Segoe UI Semibold", 11),
+        fg="#fff", bg=C["green"], activebackground="#047857",
+        relief=tk.FLAT, cursor="hand2", command=do_save, pady=8, padx=12,
     )
-    sb.pack(fill=tk.X, pady=(0, 4))
-    sb.bind("<Enter>", lambda e: sb.config(bg="#0e6b0e"))
+    sb.pack(fill=tk.X, pady=(0, 6))
+    sb.bind("<Enter>", lambda e: sb.config(bg="#047857"))
     sb.bind("<Leave>", lambda e: sb.config(bg=C["green"]))
 
     xb = tk.Button(
         rp, text="닫기 (Esc)", font=F["body"], fg=C["tx2"], bg=C["sf2"],
         activebackground=C["bdr"], relief=tk.FLAT, cursor="hand2",
-        command=_close_win, pady=5,
+        command=_close_win, pady=6,
     )
     xb.pack(fill=tk.X)
     xb.bind("<Enter>", lambda e: xb.config(bg=C["bdr"]))
@@ -669,12 +770,22 @@ def _open_settings_window(parent, on_settings_saved=None):
 
     pd = 18
 
+    def _settings_section_title(parent_frame, title):
+        """설정 창 섹션 제목 (왼쪽 액센트 바 + 텍스트)"""
+        f = tk.Frame(parent_frame, bg=C["sf"])
+        f.pack(fill=tk.X, pady=(0, 4))
+        bar = tk.Frame(f, width=3, bg=C["accent_line"], height=14)
+        bar.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
+        bar.pack_propagate(False)
+        tk.Label(f, text=title, font=F["h2"], fg=C["tx"], bg=C["sf"]).pack(anchor=tk.W)
+        return f
+
     # ── 섹션 1: 검색 기준 시간 ──
-    s1 = tk.Frame(sf, bg=C["sf"], padx=16, pady=10)
-    s1.pack(fill=tk.X, padx=pd, pady=(pd, 6))
+    s1 = tk.Frame(sf, bg=C["sf"], padx=18, pady=12)
+    s1.pack(fill=tk.X, padx=pd, pady=(pd, 8))
+    _settings_section_title(s1, "검색 기준 시간")
     r1 = tk.Frame(s1, bg=C["sf"])
     r1.pack(fill=tk.X)
-    tk.Label(r1, text="검색 기준 시간", font=F["h2"], fg=C["tx"], bg=C["sf"]).pack(side=tk.LEFT, padx=(0, 16))
     hours_var = tk.StringVar(value=str(max(30, min(100, settings.get("hours", DEFAULT_HOURS)))))
 
     def _h_adj(delta):
@@ -689,12 +800,54 @@ def _open_settings_window(parent, on_settings_saved=None):
     tk.Label(r1, textvariable=hours_var, font=("Segoe UI", 13, "bold"), fg=C["ac"], bg=C["sf"], width=4, anchor=tk.CENTER).pack(side=tk.LEFT)
     tk.Button(r1, text="▶", font=("Segoe UI", 9), fg=C["tx2"], bg=C["sf"], activeforeground=C["ac"], relief=tk.FLAT, cursor="hand2", command=lambda: _h_adj(1), padx=6, pady=2).pack(side=tk.LEFT)
     tk.Label(r1, text="시간 전", font=F["body"], fg=C["tx2"], bg=C["sf"]).pack(side=tk.LEFT, padx=(4, 0))
+    # 추가개발-1: 검색 기준 시간 프리셋 (30/48/72/100)
+    r1b = tk.Frame(s1, bg=C["sf"])
+    r1b.pack(fill=tk.X, pady=(6, 0))
+    for h in (30, 48, 72, 100):
+        def _set_h(val=h):
+            hours_var.set(str(val))
+            _mark_dirty()
+        b = tk.Button(r1b, text=f"{h}h", font=("Segoe UI", 9), fg=C["tx2"], bg=C["inp"], activeforeground=C["ac"], relief=tk.FLAT, cursor="hand2", command=_set_h, padx=8, pady=3)
+        b.pack(side=tk.LEFT, padx=(0, 4))
+        b.bind("<Enter>", lambda e, btn=b: btn.config(bg=C["bdr"], fg=C["ac"]))
+        b.bind("<Leave>", lambda e, btn=b: btn.config(bg=C["inp"], fg=C["tx2"]))
     tk.Label(s1, text="현재 시간 기준, 설정 시간 이전까지의 게시판 글 대상 (30~100)", font=F["xs"], fg=C["tx3"], bg=C["sf"]).pack(anchor=tk.W, pady=(4, 0))
+    # 추가개발-3: 토픽당 최대 검색 결과 상한
+    r1c = tk.Frame(s1, bg=C["sf"])
+    r1c.pack(fill=tk.X, pady=(8, 0))
+    tk.Label(r1c, text="토픽당 최대 결과:", font=F["xs"], fg=C["tx2"], bg=C["sf"]).pack(side=tk.LEFT, padx=(0, 8))
+    max_results_var = tk.StringVar(value=str(settings.get("max_results_per_topic", 0)))
+    for val, lbl in [(0, "제한없음"), (50, "50"), (100, "100"), (200, "200")]:
+        def _set_max(v=val):
+            max_results_var.set(str(v))
+            _mark_dirty()
+        b = tk.Button(r1c, text=lbl, font=("Segoe UI", 9), fg=C["tx2"], bg=C["inp"], activeforeground=C["ac"], relief=tk.FLAT, cursor="hand2", command=_set_max, padx=6, pady=2)
+        b.pack(side=tk.LEFT, padx=(0, 2))
+        b.bind("<Enter>", lambda e, btn=b: btn.config(bg=C["bdr"], fg=C["ac"]))
+        b.bind("<Leave>", lambda e, btn=b: btn.config(bg=C["inp"], fg=C["tx2"]))
+
+    # 추가개발-5: PDF 기본 저장 폴더 (통계)
+    r1d = tk.Frame(s1, bg=C["sf"])
+    r1d.pack(fill=tk.X, pady=(8, 0))
+    tk.Label(r1d, text="PDF 기본 폴더 (통계):", font=F["xs"], fg=C["tx2"], bg=C["sf"]).pack(side=tk.LEFT, padx=(0, 8))
+    pdf_default_dir_var = tk.StringVar(value=settings.get("pdf_default_dir") or "")
+    pdf_dir_entry = tk.Entry(r1d, textvariable=pdf_default_dir_var, font=("Segoe UI", 9), bg=C["inp"], fg=C["tx"], width=28, relief=tk.FLAT)
+    pdf_dir_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=4, ipadx=6, padx=(0, 4))
+    def _browse_pdf_dir():
+        d = filedialog.askdirectory(parent=win, title="PDF 저장 기본 폴더 선택")
+        if d:
+            pdf_default_dir_var.set(d)
+            _mark_dirty()
+    tk.Button(r1d, text="찾아보기", font=F["xs"], fg=C["ac"], bg=C["sf"], relief=tk.FLAT, cursor="hand2", command=_browse_pdf_dir).pack(side=tk.LEFT)
+    pdf_dir_entry.bind("<Key>", lambda e: _mark_dirty())
+
+    # U-4: 섹션 구분선
+    tk.Frame(sf, height=1, bg=C["bdr"]).pack(fill=tk.X, padx=pd, pady=(8, 0))
 
     # ── 섹션 1.5: 리포트 헤더 편집 ──
-    s15 = tk.Frame(sf, bg=C["sf"], padx=16, pady=10)
-    s15.pack(fill=tk.X, padx=pd, pady=(0, 6))
-    tk.Label(s15, text="리포트 헤더 편집", font=F["h2"], fg=C["tx"], bg=C["sf"]).pack(anchor=tk.W)
+    s15 = tk.Frame(sf, bg=C["sf"], padx=18, pady=12)
+    s15.pack(fill=tk.X, padx=pd, pady=(0, 8))
+    _settings_section_title(s15, "리포트 헤더 편집")
     tk.Label(s15, text="리포트 상단에 표시되는 헤더를 자유롭게 편집할 수 있습니다", font=F["xs"], fg=C["tx2"], bg=C["sf"]).pack(anchor=tk.W, pady=(2, 6))
     header_text = tk.Text(
         s15, font=("Consolas", 10), bg=C["inp"], fg=C["tx"],
@@ -723,10 +876,13 @@ def _open_settings_window(parent, on_settings_saved=None):
     rst_btn.bind("<Enter>", lambda e: rst_btn.config(fg=C["ac_h"]))
     rst_btn.bind("<Leave>", lambda e: rst_btn.config(fg=C["ac"]))
 
+    # U-4: 섹션 구분선
+    tk.Frame(sf, height=1, bg=C["bdr"]).pack(fill=tk.X, padx=pd, pady=(8, 0))
+
     # ── 섹션 2: 토픽 추가 ──
-    s2 = tk.Frame(sf, bg=C["sf"], padx=16, pady=10, highlightbackground=C["bdr_a"], highlightthickness=1)
-    s2.pack(fill=tk.X, padx=pd, pady=(0, 6))
-    tk.Label(s2, text="새 토픽 추가", font=F["h2"], fg=C["ac"], bg=C["sf"]).pack(anchor=tk.W)
+    s2 = tk.Frame(sf, bg=C["sf"], padx=18, pady=12, highlightbackground=C["bdr_a"], highlightthickness=1)
+    s2.pack(fill=tk.X, padx=pd, pady=(0, 8))
+    _settings_section_title(s2, "새 토픽 추가")
     tk.Label(s2, text="웹검색으로 관련 사이트·게시판 자동 탐색 후 등록", font=F["xs"], fg=C["tx2"], bg=C["sf"]).pack(anchor=tk.W, pady=(2, 6))
     ar = tk.Frame(s2, bg=C["sf"])
     ar.pack(fill=tk.X)
@@ -803,8 +959,16 @@ def _open_settings_window(parent, on_settings_saved=None):
     ae.bind("<Return>", lambda e: add_topic())
     ae.focus_set()
 
+    # U-4: 섹션 구분선
+    tk.Frame(sf, height=1, bg=C["bdr"]).pack(fill=tk.X, padx=pd, pady=(8, 0))
+
     # ── 섹션 3: 토픽 목록 ──
-    tk.Label(sf, text="토픽 목록  (클릭 = 활성 토글  ·  드래그 = 순서 변경)", font=F["h2"], fg=C["tx"], bg=C["bg"]).pack(anchor=tk.W, padx=pd, pady=(6, 4))
+    s3_header = tk.Frame(sf, bg=C["bg"])
+    s3_header.pack(fill=tk.X, padx=pd, pady=(10, 4))
+    bar3 = tk.Frame(s3_header, width=3, bg=C["accent_line"], height=14)
+    bar3.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 8))
+    bar3.pack_propagate(False)
+    tk.Label(s3_header, text="토픽 목록  (클릭 = 활성 토글  ·  드래그 = 순서 변경)", font=F["h2"], fg=C["tx"], bg=C["bg"]).pack(anchor=tk.W)
     inner = tk.Frame(sf, bg=C["bg"])
     inner.pack(fill=tk.X, padx=pd, pady=(0, pd))
 
@@ -994,6 +1158,7 @@ def main():
     from tkinter import ttk, scrolledtext, messagebox, filedialog
 
     _instance_ok = acquire_instance_lock()
+
     if not _instance_ok:
         log.warning("Instance lock not acquired")
         _r = tk.Tk()
@@ -1008,17 +1173,19 @@ def main():
         if not go:
             sys.exit(0)
 
+    # 고급 다크 테마 (통계 대시보드와 톤 통일)
     COLORS = {
-        "bg": "#1e1e1e", "card": "#252526", "inp": "#2d2d30",
-        "ac": "#0078d4", "ac_h": "#106ebe", "ac_soft": "#094771",
-        "text": "#cccccc", "muted": "#858585", "border": "#3f3f46",
-        "stop": "#d13438", "stop_h": "#e04b4f",
+        "bg": "#16161a", "card": "#1c1c21", "inp": "#232328",
+        "ac": "#0ea5e9", "ac_h": "#0384c7", "ac_soft": "#0c4a6e",
+        "text": "#e4e4e7", "muted": "#a1a1aa", "border": "#27272a",
+        "stop": "#ef4444", "stop_h": "#dc2626",
+        "accent_line": "#0ea5e9",
     }
 
     root = tk.Tk()
     root.title(f"게시판 검색기 — {APP_VERSION}")
-    root.geometry("720x680")
-    root.minsize(600, 520)
+    root.geometry("740x700")
+    root.minsize(620, 540)
     root.configure(bg=COLORS["bg"])
     root.resizable(True, True)
 
@@ -1041,26 +1208,30 @@ def main():
     except ImportError:
         _missing_deps.append("pyperclip")
     try:
-        from duckduckgo_search import DDGS  # noqa: F401
+        from ddgs import DDGS  # noqa: F401
     except ImportError:
-        _missing_deps.append("duckduckgo-search")
+        try:
+            from duckduckgo_search import DDGS  # noqa: F401
+        except ImportError:
+            _missing_deps.append("ddgs")
 
     mf = tk.Frame(root, bg=COLORS["bg"], padx=28, pady=14)
     mf.pack(fill=tk.BOTH, expand=True)
 
-    # ── 헤더 ──
-    hdr = tk.Frame(mf, bg=COLORS["bg"])
-    hdr.pack(fill=tk.X, pady=(0, 8))
-    hl = tk.Frame(hdr, bg=COLORS["bg"])
+    # ── 헤더 (고급 스타일: 하단 액센트 라인) ──
+    hdr = tk.Frame(mf, bg=COLORS["card"], pady=12)
+    hdr.pack(fill=tk.X, pady=(0, 10))
+    tk.Frame(hdr, height=2, bg=COLORS["accent_line"]).pack(side=tk.BOTTOM, fill=tk.X)
+    hl = tk.Frame(hdr, bg=COLORS["card"], padx=4)
     hl.pack(side=tk.LEFT, fill=tk.Y)
 
-    title_row = tk.Frame(hl, bg=COLORS["bg"])
+    title_row = tk.Frame(hl, bg=COLORS["card"])
     title_row.pack(anchor=tk.W)
-    tk.Label(title_row, text="게시판 검색기", font=FT, fg=COLORS["text"], bg=COLORS["bg"]).pack(side=tk.LEFT)
-    tk.Label(title_row, text=f"  {APP_VERSION}", font=("Segoe UI", 9), fg=COLORS["muted"], bg=COLORS["bg"]).pack(side=tk.LEFT, anchor=tk.S, pady=(0, 4))
-    tk.Label(title_row, text=f"  {APP_FLAG}", font=("Segoe UI Emoji", 14), fg=COLORS["text"], bg=COLORS["bg"]).pack(side=tk.LEFT, anchor=tk.S, pady=(0, 2))
+    tk.Label(title_row, text="게시판 검색기", font=("Segoe UI Semibold", 18), fg=COLORS["text"], bg=COLORS["card"]).pack(side=tk.LEFT)
+    tk.Label(title_row, text=f"  {APP_VERSION}", font=("Segoe UI", 9), fg=COLORS["muted"], bg=COLORS["card"]).pack(side=tk.LEFT, anchor=tk.S, pady=(0, 4))
+    tk.Label(title_row, text=f"  {APP_FLAG}", font=("Segoe UI Emoji", 14), fg=COLORS["text"], bg=COLORS["card"]).pack(side=tk.LEFT, anchor=tk.S, pady=(0, 2))
 
-    tk.Label(hl, text="토픽별 핫키워드 · 네티즌 의견 실시간 리포트", font=FS, fg=COLORS["muted"], bg=COLORS["bg"]).pack(anchor=tk.W, pady=(2, 0))
+    tk.Label(hl, text="토픽별 핫키워드 · 네티즌 의견 실시간 리포트", font=("Segoe UI", 10), fg=COLORS["muted"], bg=COLORS["card"]).pack(anchor=tk.W, pady=(4, 0))
 
     def _settings_summary():
         s = get_settings()
@@ -1070,18 +1241,22 @@ def main():
         return f"{enabled}개 토픽 · {hours}시간 기준"
 
     summary_var = tk.StringVar(value=_settings_summary())
-    tk.Label(hl, textvariable=summary_var, font=("Segoe UI", 9), fg=COLORS["ac"], bg=COLORS["bg"]).pack(anchor=tk.W, pady=(4, 0))
+    tk.Label(hl, textvariable=summary_var, font=("Segoe UI", 9), fg=COLORS["ac"], bg=COLORS["card"]).pack(anchor=tk.W, pady=(6, 0))
 
     sc, bc = get_site_board_counts_display()
     total_var = tk.StringVar(value=f"{sc:,}개 사이트 · {bc:,}개 게시판 검색")
-    tk.Label(hl, textvariable=total_var, font=("Segoe UI", 9), fg=COLORS["muted"], bg=COLORS["bg"]).pack(anchor=tk.W, pady=(1, 0))
+    tk.Label(hl, textvariable=total_var, font=("Segoe UI", 9), fg=COLORS["muted"], bg=COLORS["card"]).pack(anchor=tk.W, pady=(2, 0))
 
     if _missing_deps:
         dep_text = f"⚠ 미설치 모듈: {', '.join(_missing_deps)} — pip install 필요"
-        tk.Label(hl, text=dep_text, font=("Segoe UI", 8), fg="#ff8c00", bg=COLORS["bg"]).pack(anchor=tk.W, pady=(2, 0))
+        tk.Label(hl, text=dep_text, font=("Segoe UI", 8), fg="#f59e0b", bg=COLORS["card"]).pack(anchor=tk.W, pady=(2, 0))
 
     def open_settings():
         if is_running[0]:
+            messagebox.showinfo(
+                "설정",
+                "검색 중에는 설정을 변경할 수 없습니다.\n검색이 끝난 뒤 다시 시도해 주세요.",
+            )
             return
 
         def _after():
@@ -1096,11 +1271,11 @@ def main():
 
         _open_settings_window(root, on_settings_saved=_after)
 
-    hr = tk.Frame(hdr, bg=COLORS["bg"])
+    hr = tk.Frame(hdr, bg=COLORS["card"])
     hr.pack(side=tk.RIGHT, anchor=tk.NE)
     gear = tk.Button(
         hr, text="⚙", font=("Segoe UI Symbol", 16), fg=COLORS["muted"],
-        bg=COLORS["bg"], activebackground=COLORS["card"],
+        bg=COLORS["card"], activebackground=COLORS["inp"],
         activeforeground=COLORS["ac"], relief=tk.FLAT, cursor="hand2",
         command=open_settings, borderwidth=0, highlightthickness=0,
     )
@@ -1114,7 +1289,7 @@ def main():
 
     mail_btn = tk.Button(
         hr, text="✉", font=("Segoe UI Symbol", 14), fg=COLORS["muted"],
-        bg=COLORS["bg"], activebackground=COLORS["card"],
+        bg=COLORS["card"], activebackground=COLORS["inp"],
         activeforeground=COLORS["ac"], relief=tk.FLAT, cursor="hand2",
         command=_send_mail, borderwidth=0, highlightthickness=0,
     )
@@ -1130,24 +1305,22 @@ def main():
         if search_data is None:
             messagebox.showinfo(
                 "통계 보기",
-                "아직 검색 결과가 없습니다.\n\n"
-                "먼저 스타트 버튼을 눌러 리포트를 생성한 후\n"
-                "통계 보기를 이용해 주세요.",
+                "먼저 ▶ 스타트로 리포트를 생성한 뒤 통계를 확인할 수 있습니다.",
             )
             return
         try:
             from stats_window import open_stats_window
             stats = search_data.get("통계", {})
-            open_stats_window(root, stats, search_data)
+            open_stats_window(root, stats, search_data, initial_pdf_dir=get_settings().get("pdf_default_dir") or None)
         except ImportError:
             messagebox.showwarning("통계 보기", "stats_window 모듈을 로드할 수 없습니다.")
         except Exception as e:
             log.error("통계 대시보드 오류: %s", e)
-            messagebox.showerror("오류", f"통계 대시보드를 열 수 없습니다.\n\n{e}")
+            messagebox.showerror("오류", "통계 대시보드를 열 수 없습니다.\n\n로그 파일(logs/app.log)을 확인해 주세요.")
 
     stats_btn = tk.Button(
         hr, text="📊", font=("Segoe UI Emoji", 14), fg=COLORS["muted"],
-        bg=COLORS["bg"], activebackground=COLORS["card"],
+        bg=COLORS["card"], activebackground=COLORS["inp"],
         activeforeground=COLORS["ac"], relief=tk.FLAT, cursor="hand2",
         command=_open_stats, borderwidth=0, highlightthickness=0,
     )
@@ -1186,22 +1359,22 @@ def main():
             log.warning("Social share failed (%s): %s", name, e)
             stat_var.set(f"{name} 실행 실패 — 프로그램이 설치되어 있는지 확인하세요.")
 
-    sbar = tk.Frame(mf, bg=COLORS["bg"])
-    sbar.pack(fill=tk.X, pady=(0, 4))
+    sbar = tk.Frame(mf, bg=COLORS["card"])
+    sbar.pack(fill=tk.X, pady=(0, 6))
     for icon, name, accent, url in SOCIAL_LINKS:
         b = tk.Button(
             sbar, text=icon, font=("Segoe UI Emoji", 12), fg=COLORS["muted"],
-            bg=COLORS["bg"], activebackground=COLORS["card"],
+            bg=COLORS["card"], activebackground=COLORS["inp"],
             activeforeground=accent, relief=tk.FLAT, cursor="hand2",
-            borderwidth=0, highlightthickness=0, padx=2, pady=0,
+            borderwidth=0, highlightthickness=0, padx=3, pady=2,
             command=lambda n=name, u=url: _open_social(n, u),
         )
         b.pack(side=tk.RIGHT, padx=2)
         b.bind("<Enter>", lambda e, b=b, c=accent: b.config(fg=c))
         b.bind("<Leave>", lambda e, b=b: b.config(fg=COLORS["muted"]))
 
-    # ── 컨트롤 카드 ──
-    card = tk.Frame(mf, bg=COLORS["card"], padx=20, pady=14, highlightbackground=COLORS["border"], highlightthickness=1)
+    # ── 컨트롤 카드 (고급 스타일) ──
+    card = tk.Frame(mf, bg=COLORS["card"], padx=22, pady=16, highlightbackground=COLORS["border"], highlightthickness=1)
     card.pack(fill=tk.X, pady=(0, 12))
     bf = tk.Frame(card, bg=COLORS["card"])
     bf.pack(fill=tk.X)
@@ -1236,6 +1409,43 @@ def main():
     save_file_btn.bind("<Enter>", lambda e: save_file_btn.config(bg=COLORS["border"]))
     save_file_btn.bind("<Leave>", lambda e: save_file_btn.config(bg=COLORS["inp"]))
 
+    # 추가개발-4: 리포트 이력 (최근 5개)
+    report_history = []
+    report_history_index = [0]
+
+    def _show_history_at(idx):
+        if not report_history or idx < 0 or idx >= len(report_history):
+            return
+        report_history_index[0] = idx
+        text_area.configure(state=tk.NORMAL)
+        text_area.delete("1.0", tk.END)
+        text_area.insert(tk.END, report_history[idx]["text"])
+        _color_result()
+        text_area.see("1.0")
+        text_area.configure(state=tk.DISABLED)
+        stat_var.set(f"리포트 이력 {idx + 1}/{len(report_history)} ({report_history[idx]['ts']})")
+        prev_btn.config(state=tk.NORMAL if idx < len(report_history) - 1 else tk.DISABLED)
+        next_btn.config(state=tk.NORMAL if idx > 0 else tk.DISABLED)
+
+    prev_btn = tk.Button(
+        bf, text="  ◀ 이전  ", font=FB, fg=COLORS["muted"], bg=COLORS["inp"],
+        activebackground=COLORS["border"], relief=tk.FLAT, padx=12, pady=8, cursor="hand2",
+        state=tk.DISABLED,
+    )
+    prev_btn.pack(side=tk.LEFT, padx=(8, 4))
+    next_btn = tk.Button(
+        bf, text="  다음 ▶  ", font=FB, fg=COLORS["muted"], bg=COLORS["inp"],
+        activebackground=COLORS["border"], relief=tk.FLAT, padx=12, pady=8, cursor="hand2",
+        state=tk.DISABLED,
+    )
+    next_btn.pack(side=tk.LEFT)
+    prev_btn.config(command=lambda: _show_history_at(report_history_index[0] + 1))
+    next_btn.config(command=lambda: _show_history_at(report_history_index[0] - 1))
+    prev_btn.bind("<Enter>", lambda e: prev_btn.config(bg=COLORS["border"]) if prev_btn["state"] == tk.NORMAL else None)
+    prev_btn.bind("<Leave>", lambda e: prev_btn.config(bg=COLORS["inp"]))
+    next_btn.bind("<Enter>", lambda e: next_btn.config(bg=COLORS["border"]) if next_btn["state"] == tk.NORMAL else None)
+    next_btn.bind("<Leave>", lambda e: next_btn.config(bg=COLORS["inp"]))
+
     # 프로그레스 바
     prog_container = tk.Frame(card, bg=COLORS["card"])
     prog_container.pack(fill=tk.X, pady=(6, 0))
@@ -1244,7 +1454,7 @@ def main():
         style.theme_use("clam")
         style.configure(
             "Custom.Horizontal.TProgressbar",
-            troughcolor="#3c3c3c", background="#0078d4", thickness=6,
+            troughcolor=COLORS["inp"], background=COLORS["ac"], thickness=6,
         )
     except Exception:
         pass
@@ -1283,9 +1493,17 @@ def main():
             _stop_event.set()
             _reset()
             return
-        _stop_event.clear()
+        # V-3: 토픽이 0개면 스타트 차단
+        topic_config = build_topic_config(get_settings())
+        if not topic_config:
+            messagebox.showinfo(
+                "검색",
+                "최소 1개 이상 토픽을 활성화해 주세요.\n\n설정(⚙)에서 토픽을 선택한 뒤 다시 시도하세요.",
+            )
+            return
+        _stop_event.clear()  # V-2: 재시작 시 이벤트 초기화
         _gen[0] += 1
-        gen_id = _gen[0]
+        gen_id = _gen[0]  # V-2: gen_id로 이전 완료 콜백 적용 방지
         _btn_stop()
         stat_var.set("리포트 생성 중...")
         count_var.set("")
@@ -1304,7 +1522,8 @@ def main():
             pct = (current / total * 100) if total > 0 else 0
 
             def _update():
-                count_var.set(f"토픽 {current + 1}/{total} 실시간 검색 중")
+                pct_str = f" ({int(pct)}%)" if total > 0 else ""
+                count_var.set(f"토픽 {current + 1}/{total}{pct_str} 실시간 검색 중")
                 cur_var.set(f"🔍 {topic_name}  {detail}")
                 progress_bar["value"] = pct
             root.after(0, _update)
@@ -1360,6 +1579,12 @@ def main():
             _color_result()
             text_area.see("1.0")
             stat_var.set(f"완료 · 핫키워드 {msg}개" + (" · 클립보드 복사됨" if clip else ""))
+            # 추가개발-4: 이력에 추가 (최대 5개)
+            report_history.insert(0, {"text": output, "ts": datetime.now().strftime("%Y-%m-%d %H:%M")})
+            report_history[:] = report_history[:5]
+            report_history_index[0] = 0
+            prev_btn.config(state=tk.NORMAL if len(report_history) > 1 else tk.DISABLED)
+            next_btn.config(state=tk.DISABLED)
         else:
             text_area.insert(tk.END, f"오류\n\n{msg}")
             stat_var.set("오류 발생")
@@ -1427,34 +1652,45 @@ def main():
     text_area.bind("<FocusIn>", lambda e: text_area.configure(highlightthickness=1, highlightbackground=COLORS["ac"]))
     text_area.bind("<FocusOut>", lambda e: text_area.configure(highlightthickness=0))
 
-    # ── 하단 상태바 (상용 수준) ──
+    # ── 하단 상태바 (고급 스타일) ──
     status_bar = tk.Frame(mf, bg=COLORS["card"], highlightbackground=COLORS["border"], highlightthickness=1)
-    status_bar.pack(fill=tk.X, pady=(8, 0))
-    sb_inner = tk.Frame(status_bar, bg=COLORS["card"], padx=10, pady=3)
+    status_bar.pack(fill=tk.X, pady=(10, 0))
+    tk.Frame(status_bar, height=1, bg=COLORS["accent_line"]).pack(side=tk.TOP, fill=tk.X)
+    sb_inner = tk.Frame(status_bar, bg=COLORS["card"], padx=12, pady=5)
     sb_inner.pack(fill=tk.X)
 
+    tip_var = tk.StringVar(value="")
     db_status = "암호화 DB" if sc > 0 else "DB 미설정"
-    db_color = "#4ec9b0" if sc > 0 else "#ff8c00"
-    tk.Label(
-        sb_inner, text=f"● {db_status}", font=("Segoe UI", 8),
+    db_color = "#22d3ee" if sc > 0 else "#f59e0b"
+    db_lbl = tk.Label(
+        sb_inner, text=f"● {db_status}", font=("Segoe UI", 9),
         fg=db_color, bg=COLORS["card"],
-    ).pack(side=tk.LEFT, padx=(0, 12))
+    )
+    db_lbl.pack(side=tk.LEFT, padx=(0, 14))
+    db_lbl.bind("<Enter>", lambda e: tip_var.set("사이트 DB가 로드되었습니다." if sc > 0 else "설정에서 사이트 갱신을 실행해 주세요."))
+    db_lbl.bind("<Leave>", lambda e: tip_var.set(""))
 
     tk.Label(
-        sb_inner, text="Ctrl+R 시작 · Ctrl+S 저장 · Ctrl+C 복사",
-        font=("Segoe UI", 8), fg="#505050", bg=COLORS["card"],
+        sb_inner, text="Ctrl+R 시작 | Ctrl+S 저장 | F5 새로고침",
+        font=("Segoe UI", 9), fg=COLORS["muted"], bg=COLORS["card"],
     ).pack(side=tk.LEFT)
+
+    tip_lbl = tk.Label(sb_inner, textvariable=tip_var, font=("Segoe UI", 8), fg=COLORS["muted"], bg=COLORS["card"])
+    tip_lbl.pack(side=tk.LEFT, padx=(12, 0))
+    for w, msg in [(gear, "설정"), (stats_btn, "통계 보기"), (mail_btn, "메일 보내기")]:
+        w.bind("<Enter>", lambda e, m=msg: tip_var.set(m))
+        w.bind("<Leave>", lambda e: tip_var.set(""))
 
     cr = tk.Label(
         sb_inner, text=f"{COPYRIGHT} · {EMAIL}",
-        font=("Segoe UI", 8), fg="#555555", bg=COLORS["card"], cursor="hand2",
+        font=("Segoe UI", 8), fg=COLORS["muted"], bg=COLORS["card"], cursor="hand2",
     )
     cr.pack(side=tk.RIGHT)
     cr.bind("<Enter>", lambda e: cr.config(fg=COLORS["ac"]))
-    cr.bind("<Leave>", lambda e: cr.config(fg="#555555"))
+    cr.bind("<Leave>", lambda e: cr.config(fg=COLORS["muted"]))
     cr.bind("<Button-1>", lambda e: webbrowser.open(f"mailto:{EMAIL}"))
 
-    # ── 키보드 단축키 ──
+    # ── 키보드 단축키 (V-1: root에만 바인딩, 설정 창은 자체 Esc/Ctrl+S 사용 → 충돌 없음) ──
     root.bind("<Control-r>", lambda e: on_start_stop())
     root.bind("<Control-s>", lambda e: on_save_file())
     root.bind("<F5>", lambda e: on_start_stop())

@@ -64,6 +64,8 @@ def get_default_settings() -> dict:
         "last_track_date": "",
         "valid_rate": -1,
         "report_header": DEFAULT_REPORT_HEADER,
+        "max_results_per_topic": 0,  # 0=제한없음, 50/100/200 (추가개발-3)
+        "pdf_default_dir": "",  # 추가개발-5: PDF 저장 기본 폴더 (빈 값이면 세션 기억 또는 IMoutput)
     }
 
 
@@ -101,6 +103,12 @@ def _normalize_settings(data: dict) -> dict:
         vr = int(data.get("valid_rate", -1))
     except (TypeError, ValueError):
         vr = -1
+    try:
+        mrp = int(data.get("max_results_per_topic", 0))
+        if mrp not in (0, 50, 100, 200):
+            mrp = 0
+    except (TypeError, ValueError):
+        mrp = 0
     return {
         "topics": topics,
         "custom_topics": custom,
@@ -109,6 +117,8 @@ def _normalize_settings(data: dict) -> dict:
         "last_track_date": str(data.get("last_track_date") or ""),
         "valid_rate": vr,
         "report_header": str(data.get("report_header") or DEFAULT_REPORT_HEADER),
+        "max_results_per_topic": mrp,
+        "pdf_default_dir": str(data.get("pdf_default_dir") or ""),
     }
 
 
@@ -142,6 +152,16 @@ def load_settings() -> dict:
     except Exception as e:
         log.error("Settings load failed: %s", e)
         return base
+
+
+def get_settings_for_export(settings: dict) -> dict:
+    """현재 설정을 JSON 내보내기용 딕셔너리로 반환 (sites_db.enc 제외, app_settings 내용만)."""
+    return _normalize_settings(dict(settings))
+
+
+def normalize_imported_settings(data: dict) -> dict:
+    """가져오기한 JSON 딕셔너리를 정규화하여 반환."""
+    return _normalize_settings(data)
 
 
 def save_settings(settings: dict) -> bool:
@@ -270,7 +290,10 @@ def find_related_sites_via_web_search(topic_name: str) -> list:
     sites: list[dict] = []
     try:
         from urllib.parse import urlparse
-        from duckduckgo_search import DDGS
+        try:
+            from ddgs import DDGS
+        except ImportError:
+            from duckduckgo_search import DDGS
 
         queries = [
             f"{key} 커뮤니티 사이트", f"{key} 게시판", f"{key} 포럼",
@@ -297,7 +320,7 @@ def find_related_sites_via_web_search(topic_name: str) -> list:
                 log.warning("Web search query failed '%s': %s", q, e)
                 continue
     except ImportError:
-        log.info("duckduckgo_search not installed")
+        log.info("ddgs not installed")
     except Exception as e:
         log.error("Web search error: %s", e)
     return [{"category": "웹검색 결과", "sites": sites}] if sites else []

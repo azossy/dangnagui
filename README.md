@@ -1,6 +1,6 @@
 # 당나귀 게시판검색기 (dangnagui)
 
-> 임금님귀 v1.3.1 · copyright by 챠리 (challychoi@me.com)
+> 임금님귀 v1.3.2 · copyright by 챠리 (challychoi@me.com)
 
 **국내 1,000+ 사이트 / 60,000+ 게시판** 실시간 분석 엔진.  
 토픽별 핫키워드 · 네티즌 의견을 **DuckDuckGo 실시간 검색**으로 수집하여  
@@ -39,17 +39,17 @@ Microsoft Fluent 다크 UI · USB 포터블 · Windows 10/11 지원.
 
 ### 방법 1 — 인스톨러 (권장)
 
-1. **[dangnagui-setup-v1.3.1.exe](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
+1. **[dangnagui-setup-v1.3.2.exe](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
 2. 다운로드한 파일을 더블클릭하여 실행
 3. 설치 경로 선택 (기본: `C:\Program Files\dangnagui`)
 4. "설치" 클릭 → 완료
 5. 바탕화면 또는 시작 메뉴에서 **당나귀 게시판검색기** 실행
 
-> Windows SmartScreen 경고가 뜨면 "추가 정보" → "실행" 클릭
+> **Windows SmartScreen 경고가 뜨는 경우** — 아래 [SmartScreen 안내](#smartscreen-안내) 참조
 
 ### 방법 2 — 포터블 ZIP (USB / 설치 없이 사용)
 
-1. **[dangnagui-v1.3.1-portable.zip](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
+1. **[dangnagui-v1.3.2-portable.zip](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
 2. 원하는 위치(USB, 바탕화면 등)에 압축 해제
 3. 폴더 안의 `dangnagui.exe` 실행
 
@@ -75,9 +75,10 @@ python main.py
 - **언어 필터** — 한국어/영어 결과만 수집, 중국어·일본어 등 타국어 자동 배제
 - **자동 번역** — 한국어 데이터 부족 시 영문 결과를 DuckDuckGo 번역으로 자동 한국어 변환
 - **리포트 헤더 편집** — 설정에서 리포트 상단 헤더를 자유롭게 커스터마이즈
-- **설정(⚙)** — 토픽 추가/삭제/순서 변경, 핫키워드 개수(1~10), 검색 기준 시간(30~100시간)
+- **설정(⚙)** — 토픽 추가/삭제/순서 변경, 핫키워드 개수(1~10), 검색 기준 시간(30~100시간, 30/48/72/100 프리셋), 설정 내보내기/가져오기, 토픽당 최대 결과(50/100/200), PDF 기본 폴더
 - **사이트 갱신** — 3계층 탐색(시드DB → API/파싱 → DDG)으로 사이트 DB 최신화, 암호화 자동 저장
 - **리포트 저장(💾)** — 텍스트 파일로 저장
+- **리포트 이력** — 최근 5개 이력, ◀ 이전 / 다음 ▶ 버튼으로 탐색
 - **소셜 공유** — Facebook, X, 카카오톡, 텔레그램, 인스타그램, 디스코드
 
 ---
@@ -89,7 +90,7 @@ build.bat
 ```
 
 - PyInstaller → `dist\dangnagui\dangnagui.exe`
-- [Inno Setup 6](https://jrsoftware.org/isinfo.php) 설치 시 → `Output\dangnagui-setup-v1.3.1.exe` 자동 생성
+- [Inno Setup 6](https://jrsoftware.org/isinfo.php) 설치 시 → `Output\dangnagui-setup-v1.3.2.exe` 자동 생성
 
 ### 프로젝트 구조
 
@@ -126,7 +127,35 @@ build.bat
 
 ---
 
+## SmartScreen 안내
+
+설치 파일 실행 시 **"Windows의 PC 보호"** 파란색 경고 화면이 나타날 수 있습니다.
+
+**왜 나타나나요?**
+- 코드 서명 인증서가 아직 적용되지 않은 프로그램에 공통적으로 나타나는 Windows 정상 경고입니다.
+- 본 프로그램은 악성코드와 무관하며, 전체 소스코드가 이 GitHub 저장소에 공개되어 있습니다.
+
+**해결 방법:**
+1. 파란 화면에서 **"추가 정보"** 텍스트를 클릭합니다.
+2. 하단에 나타나는 **"실행"** 버튼을 클릭합니다.
+
+> 코드 서명 인증서 적용은 향후 업데이트에서 진행 예정입니다.
+
+---
+
 ## 변경 이력
+
+### v1.3.2
+- **검색 기준 시간 프리셋**: 30h / 48h / 72h / 100h 버튼으로 빠른 설정
+- **설정 내보내기/가져오기**: JSON으로 설정 백업·복원
+- **토픽당 최대 결과**: 제한없음 / 50 / 100 / 200 옵션
+- **리포트 이력**: 최근 5개 이력, ◀ 이전 / 다음 ▶ 버튼으로 탐색
+- **PDF 기본 폴더**: 설정에서 통계 PDF 저장 경로 지정
+- UI 개선: 상태바, 툴팁, 진행률 %, 설정 구역 구분선, 데이터 없음 안내
+
+### v1.3.1
+- QA 개선: 단축키·검색 리셋·예외 로깅·설정 잠금·스팸 키워드 정리
+- SmartScreen 대응: VersionInfo 메타데이터, 문서 안내 보강
 
 ### v1.3.0
 - **1,000+ 사이트 / 60,000+ 게시판**: 3계층 자동 탐색 시스템 (시드DB → DC API 52K갤러리 → DDG 확장)

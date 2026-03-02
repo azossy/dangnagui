@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title dangnagui v1.3.1 build
+title dangnagui v1.3.2 build
 echo.
 echo =========================================
-echo   dangnagui v1.3.1 build system
+echo   dangnagui v1.3.2 build system
 echo   1,000+ sites / 60,000+ boards
 echo =========================================
 echo.
@@ -25,7 +25,7 @@ if exist "__pycache__" rmdir /s /q "__pycache__"
 echo       Done
 
 echo [3/5] Building dangnagui.exe with PyInstaller...
-pyinstaller --name dangnagui --onedir --noconsole --noconfirm --clean --icon "dangnagui.ico" --add-data "common.py;." --add-data "app_settings.py;." --add-data "report_engine.py;." --add-data "db_crypto.py;." --add-data "site_discovery.py;." --add-data "stats_engine.py;." --add-data "stats_window.py;." --add-data "korean_sites_seed.json;." --add-data "dangnagui.ico;." --hidden-import pyperclip --hidden-import duckduckgo_search --hidden-import lxml --hidden-import lxml.etree --hidden-import cryptography --hidden-import bs4 --hidden-import requests --hidden-import matplotlib --hidden-import matplotlib.backends.backend_tkagg --hidden-import matplotlib.backends.backend_pdf --hidden-import matplotlib.backends.backend_agg main.py
+python -m PyInstaller --name dangnagui --onedir --noconsole --noconfirm --clean --icon "dangnagui.ico" --version-file "version_info.txt" --add-data "common.py;." --add-data "app_settings.py;." --add-data "report_engine.py;." --add-data "db_crypto.py;." --add-data "site_discovery.py;." --add-data "stats_engine.py;." --add-data "stats_window.py;." --add-data "korean_sites_seed.json;." --add-data "dangnagui.ico;." --hidden-import pyperclip --hidden-import duckduckgo_search --hidden-import ddgs --hidden-import lxml --hidden-import lxml.etree --hidden-import cryptography --hidden-import bs4 --hidden-import requests --hidden-import matplotlib --hidden-import matplotlib.backends.backend_tkagg --hidden-import matplotlib.backends.backend_pdf --hidden-import matplotlib.backends.backend_agg main.py
 if errorlevel 1 (
     echo [ERROR] PyInstaller build failed.
     pause
@@ -56,7 +56,7 @@ if defined ISCC_PATH (
     if errorlevel 1 (
         echo       [WARN] Installer creation failed.
     ) else (
-        echo       Installer: Output\dangnagui-setup-v1.3.1.exe
+        echo       Installer: Output\dangnagui-setup-v1.3.2.exe
     )
 ) else (
     echo       [INFO] Inno Setup not found.

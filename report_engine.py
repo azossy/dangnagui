@@ -33,9 +33,12 @@ from common import (
 # ═══════════════════════════════════════════════════
 _HAS_DDGS = True
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
 except ImportError:
-    _HAS_DDGS = False
+    try:
+        from duckduckgo_search import DDGS
+    except ImportError:
+        _HAS_DDGS = False
 
 # ═══════════════════════════════════════════════════
 #  암호화 DB 로딩 (v1.3.0 신규)
@@ -64,6 +67,7 @@ SUMMARY_WIDTH = 32
 # ── Filter 1: 광고 키워드 블랙리스트 ──
 # 한국 커뮤니티에서 빈번한 광고/홍보 키워드 50개+
 # 각 키워드가 제목+본문에 등장하면 스팸 점수 +1
+# V-5: 오탐(정상 글 제거)·미탐(스팸 통과) 사례 시 키워드 추가/삭제·주석 제안 반영
 _SPAM_KEYWORDS = frozenset([
     # 직접 광고/홍보
     "구매하기", "지금 바로", "최저가", "할인", "쿠폰", "무료배송",
@@ -528,6 +532,7 @@ def search_topics_online(
     region: str = "kr-kr",
     progress_callback=None,
     stop_event=None,
+    max_results_per_topic: int = 0,
 ) -> dict:
     """
     각 토픽에 대해 DuckDuckGo 실시간 검색을 수행하여 핫키워드를 수집합니다.
@@ -554,7 +559,7 @@ def search_topics_online(
         }
     """
     if not _HAS_DDGS:
-        log.error("duckduckgo_search 미설치 — pip install duckduckgo-search")
+        log.error("ddgs 미설치 — pip install ddgs")
         return {"카테고리": {}, "통계": {}}
 
     # ── 전체 검색 시작 시간 ──
@@ -637,7 +642,10 @@ def search_topics_online(
                         "참고라벨": "",
                     })
             except Exception as e:
-                log.warning("텍스트 검색 실패 '%s': %s", q, e)
+                log.error(
+                    "검색 예외 [토픽=%s] %s: %s",
+                    clean_name, type(e).__name__, e,
+                )
 
         # ── 뉴스 검색 ──
         if progress_callback:
@@ -661,7 +669,10 @@ def search_topics_online(
                     "참고라벨": r.get("source", ""),
                 })
         except Exception as e:
-            log.warning("뉴스 검색 실패 '%s': %s", clean_name, e)
+            log.error(
+                "검색 예외 [토픽=%s] %s: %s",
+                clean_name, type(e).__name__, e,
+            )
 
         raw_count = len(raw_items)
 
@@ -684,6 +695,9 @@ def search_topics_online(
             if _spam_score(i["제목"], i["의견요약"], i["참고url"]) < 3
         ]
         spam_filtered = pre_spam - len(items)
+        # 추가개발-3: 토픽당 최대 검색 결과 상한 (0=제한없음)
+        if max_results_per_topic > 0 and len(items) > max_results_per_topic:
+            items = items[:max_results_per_topic]
         if spam_filtered:
             log.info(
                 "토픽 '%s': %d건 광고/스팸 필터링 (3중 필터)",

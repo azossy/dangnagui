@@ -53,10 +53,13 @@ except ImportError:
 
 _HAS_DDGS = True
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
 except ImportError:
-    _HAS_DDGS = False
-    log.info("duckduckgo_search 미설치 — Layer 3 DDG 탐색 비활성")
+    try:
+        from duckduckgo_search import DDGS
+    except ImportError:
+        _HAS_DDGS = False
+        log.info("ddgs 미설치 — Layer 3 DDG 탐색 비활성")
 
 # ═══════════════════════════════════════════════════
 #  공통 상수

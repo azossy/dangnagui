@@ -89,26 +89,31 @@ def _apply_korean_font():
 
 
 # ═══════════════════════════════════════════════════
-#  다크 테마 색상 (메인 UI와 통일)
+#  다크 테마 색상 (고급 대시보드 톤)
 # ═══════════════════════════════════════════════════
-_DARK_BG = "#1e1e1e"
-_DARK_CARD = "#252526"
-_DARK_TEXT = "#d4d4d4"
-_DARK_MUTED = "#858585"
-_DARK_ACCENT = "#0078d4"
+_DARK_BG = "#16161a"
+_DARK_CARD = "#1c1c21"
+_DARK_CARD_HOVER = "#232328"
+_DARK_TEXT = "#e4e4e7"
+_DARK_TEXT_SEC = "#a1a1aa"
+_DARK_MUTED = "#71717a"
+_DARK_ACCENT = "#0ea5e9"
+_DARK_ACCENT_DIM = "#0369a1"
 _DARK_BORDER = "#3f3f46"
+_ACCENT_LINE = "#0ea5e9"
+_CARD_BORDER = "#27272a"
 
-# 차트용 색상 팔레트 (10색, 다크 테마에 어울리는 밝은 톤)
+# 차트용 색상 팔레트 (고급 톤, 가독성 우선)
 _CHART_COLORS = [
-    "#4ec9b0", "#569cd6", "#ce9178", "#c586c0", "#dcdcaa",
-    "#9cdcfe", "#d7ba7d", "#f44747", "#608b4e", "#d16969",
+    "#22d3ee", "#0ea5e9", "#a78bfa", "#c084fc", "#34d399",
+    "#2dd4bf", "#fbbf24", "#fb923c", "#f87171", "#94a3b8",
 ]
 
 
 # ═══════════════════════════════════════════════════
 #  메인 진입점: 통계 대시보드 창 열기
 # ═══════════════════════════════════════════════════
-def open_stats_window(parent: tk.Tk, stats_data: dict, search_data: dict):
+def open_stats_window(parent: tk.Tk, stats_data: dict, search_data: dict, initial_pdf_dir: str | None = None):
     """
     통계 대시보드 Toplevel 창을 엽니다.
 
@@ -128,37 +133,40 @@ def open_stats_window(parent: tk.Tk, stats_data: dict, search_data: dict):
     # ── 윈도우 생성 ──
     win = tk.Toplevel(parent)
     win.title("통계 대시보드 — 게시판 검색기")
-    win.geometry("1000x700")
-    win.minsize(800, 550)
+    win.geometry("1024x720")
+    win.minsize(840, 580)
     win.configure(bg=_DARK_BG)
     win.transient(parent)
 
-    # ── 상단 툴바 ──
-    toolbar = tk.Frame(win, bg=_DARK_CARD, pady=6)
+    # ── 상단 툴바 (고급 스타일) ──
+    toolbar = tk.Frame(win, bg=_DARK_CARD, pady=10)
     toolbar.pack(fill=tk.X)
+    # 하단 액센트 라인
+    tk.Frame(toolbar, height=2, bg=_ACCENT_LINE).pack(side=tk.BOTTOM, fill=tk.X)
 
     tk.Label(
         toolbar, text="📊 통계 대시보드",
-        font=("Segoe UI", 14, "bold"), fg=_DARK_TEXT, bg=_DARK_CARD,
-    ).pack(side=tk.LEFT, padx=16)
+        font=("Segoe UI Semibold", 15), fg=_DARK_TEXT, bg=_DARK_CARD,
+    ).pack(side=tk.LEFT, padx=20)
 
     tk.Label(
         toolbar, text=APP_VERSION,
         font=("Segoe UI", 9), fg=_DARK_MUTED, bg=_DARK_CARD,
-    ).pack(side=tk.LEFT, padx=(0, 20))
+    ).pack(side=tk.LEFT, padx=(0, 24))
 
-    # PDF 내보내기 버튼
+    # PDF 내보내기 버튼 (CTA 스타일)
     def _on_export_pdf():
-        _export_pdf(stats_data, search_data, win)
+        _export_pdf(stats_data, search_data, win, initial_pdf_dir=initial_pdf_dir)
 
     pdf_btn = tk.Button(
         toolbar, text="  📄 PDF 내보내기  ",
         font=("Segoe UI", 10, "bold"), fg="#fff", bg=_DARK_ACCENT,
-        activebackground="#1a8ad4", relief=tk.FLAT, cursor="hand2",
+        activebackground=_DARK_ACCENT_DIM, activeforeground="#fff",
+        relief=tk.FLAT, cursor="hand2", bd=0, padx=14, pady=6,
         command=_on_export_pdf,
     )
-    pdf_btn.pack(side=tk.RIGHT, padx=16)
-    pdf_btn.bind("<Enter>", lambda e: pdf_btn.config(bg="#1a8ad4"))
+    pdf_btn.pack(side=tk.RIGHT, padx=20)
+    pdf_btn.bind("<Enter>", lambda e: pdf_btn.config(bg=_DARK_ACCENT_DIM))
     pdf_btn.bind("<Leave>", lambda e: pdf_btn.config(bg=_DARK_ACCENT))
 
     # 닫기 버튼
@@ -250,31 +258,55 @@ def open_stats_window(parent: tk.Tk, stats_data: dict, search_data: dict):
 
 
 def _safe_unbind(win, bind_id):
-    """특정 bind ID만 해제하여 다른 윈도우의 바인딩을 보존합니다."""
+    """bind_all로 등록한 특정 바인딩을 'all' 태그에서 정확히 제거합니다.
+    tkinter.unbind()는 widget 자체 태그만 처리하므로, bind_all 바인딩은
+    직접 Tcl 'all' 태그의 스크립트를 편집해야 합니다."""
     try:
-        if bind_id:
-            win.unbind("<MouseWheel>", bind_id)
+        if not bind_id:
+            return
+        all_scripts = str(win.tk.call('bind', 'all', '<MouseWheel>') or '')
+        lines = all_scripts.split('\n')
+        remaining = [ln for ln in lines if ln.strip() and bind_id not in ln]
+        new_script = '\n'.join(remaining)
+        win.tk.call('bind', 'all', '<MouseWheel>', new_script if new_script.strip() else '')
+        try:
+            win.deletecommand(bind_id)
+        except Exception:
+            pass
     except Exception:
         pass
+
+
+# ═══════════════════════════════════════════════════
+#  섹션 헤더 (액센트 바 + 제목)
+# ═══════════════════════════════════════════════════
+def _section_header(parent: tk.Frame, title: str, pad: int):
+    """고급 스타일 섹션 헤더: 왼쪽 액센트 바 + 제목."""
+    frame = tk.Frame(parent, bg=_DARK_BG)
+    frame.pack(fill=tk.X, pady=(pad, 6))
+    # 액센트 바 (왼쪽 3px)
+    bar = tk.Frame(frame, width=3, bg=_ACCENT_LINE, height=18)
+    bar.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
+    bar.pack_propagate(False)
+    tk.Label(
+        frame, text=title,
+        font=("Segoe UI Semibold", 12), fg=_DARK_TEXT, bg=_DARK_BG,
+    ).pack(anchor=tk.W)
 
 
 # ═══════════════════════════════════════════════════
 #  Section 1: 검색 개요 카드
 # ═══════════════════════════════════════════════════
 def _build_summary_cards(parent: tk.Frame, stats: dict, pad: int):
-    """핵심 수치를 카드 형태로 표시합니다."""
+    """핵심 수치를 고급 카드 형태로 표시합니다."""
     section = tk.Frame(parent, bg=_DARK_BG)
-    section.pack(fill=tk.X, padx=pad, pady=(pad, 8))
+    section.pack(fill=tk.X, padx=pad, pady=(pad, 4))
 
-    tk.Label(
-        section, text="검색 개요",
-        font=("Segoe UI", 12, "bold"), fg=_DARK_TEXT, bg=_DARK_BG,
-    ).pack(anchor=tk.W, pady=(0, 8))
+    _section_header(section, "검색 개요", 0)
 
     cards_frame = tk.Frame(section, bg=_DARK_BG)
     cards_frame.pack(fill=tk.X)
 
-    # 카드 데이터
     total_time = stats.get("total_time_sec", 0)
     card_items = [
         ("⏱", "총 검색 시간", f"{total_time:.1f}초"),
@@ -291,19 +323,19 @@ def _build_summary_cards(parent: tk.Frame, stats: dict, pad: int):
         col = i % 4
         row = i // 4
         card = tk.Frame(
-            cards_frame, bg=_DARK_CARD, padx=12, pady=8,
-            highlightbackground=_DARK_BORDER, highlightthickness=1,
+            cards_frame, bg=_DARK_CARD, padx=14, pady=10,
+            highlightbackground=_CARD_BORDER, highlightthickness=1,
         )
-        card.grid(row=row, column=col, padx=4, pady=4, sticky="nsew")
+        card.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
 
         tk.Label(
-            card, text=f"{icon} {label}",
+            card, text=f"{icon}  {label}",
             font=("Segoe UI", 9), fg=_DARK_MUTED, bg=_DARK_CARD,
         ).pack(anchor=tk.W)
         tk.Label(
             card, text=value,
-            font=("Segoe UI", 11, "bold"), fg=_DARK_TEXT, bg=_DARK_CARD,
-        ).pack(anchor=tk.W, pady=(2, 0))
+            font=("Segoe UI Semibold", 11), fg=_DARK_TEXT, bg=_DARK_CARD,
+        ).pack(anchor=tk.W, pady=(4, 0))
 
     for c in range(4):
         cards_frame.columnconfigure(c, weight=1)
@@ -313,17 +345,18 @@ def _build_summary_cards(parent: tk.Frame, stats: dict, pad: int):
 #  Section 2: Buzz Score 순위 차트
 # ═══════════════════════════════════════════════════
 def _build_buzz_chart(parent: tk.Frame, stats: dict, pad: int):
-    """Buzz Score 상위 15개 키워드 가로 막대 차트"""
+    """Buzz Score 상위 15개 키워드 가로 막대 차트 (고급 스타일)"""
     buzz_ranking = stats.get("buzz_ranking", [])
     if not buzz_ranking:
+        section = tk.Frame(parent, bg=_DARK_BG)
+        section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+        _section_header(section, "Buzz Score 순위 (회자 점수 TOP 15)", 0)
+        tk.Label(section, text="데이터 없음", font=("Segoe UI", 10), fg=_DARK_MUTED, bg=_DARK_BG).pack(anchor=tk.W, pady=(0, 8))
         return
 
     section = tk.Frame(parent, bg=_DARK_BG)
-    section.pack(fill=tk.X, padx=pad, pady=(8, 8))
-    tk.Label(
-        section, text="Buzz Score 순위 (회자 점수 TOP 15)",
-        font=("Segoe UI", 12, "bold"), fg=_DARK_TEXT, bg=_DARK_BG,
-    ).pack(anchor=tk.W, pady=(0, 4))
+    section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+    _section_header(section, "Buzz Score 순위 (회자 점수 TOP 15)", 0)
 
     top_items = buzz_ranking[:15]
     labels = [_truncate(item["title"], 25) for item in reversed(top_items)]
@@ -331,27 +364,29 @@ def _build_buzz_chart(parent: tk.Frame, stats: dict, pad: int):
     colors = [_CHART_COLORS[i % len(_CHART_COLORS)] for i in range(len(top_items))]
     colors.reverse()
 
-    fig = Figure(figsize=(9, max(4, len(top_items) * 0.35)), dpi=100)
+    fig = Figure(figsize=(9, max(4.2, len(top_items) * 0.38)), dpi=100)
     fig.patch.set_facecolor(_DARK_BG)
     ax = fig.add_subplot(111)
     ax.set_facecolor(_DARK_CARD)
 
-    bars = ax.barh(labels, scores, color=colors, height=0.6)
-    ax.set_xlabel("Buzz Score", color=_DARK_MUTED, fontsize=9)
+    bars = ax.barh(labels, scores, color=colors, height=0.65, edgecolor=_DARK_CARD, linewidth=0.8)
+    ax.set_xlabel("Buzz Score", color=_DARK_TEXT_SEC, fontsize=10)
     ax.set_xlim(0, 105)
-    ax.tick_params(colors=_DARK_MUTED, labelsize=8)
+    ax.tick_params(colors=_DARK_TEXT_SEC, labelsize=9)
+    ax.yaxis.set_tick_params(labelsize=9)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_color(_DARK_BORDER)
     ax.spines["left"].set_color(_DARK_BORDER)
+    ax.grid(axis="x", alpha=0.2, color=_DARK_TEXT)
 
     for bar, score in zip(bars, scores):
         ax.text(
-            bar.get_width() + 1, bar.get_y() + bar.get_height() / 2,
-            str(score), va="center", color=_DARK_TEXT, fontsize=8,
+            bar.get_width() + 1.2, bar.get_y() + bar.get_height() / 2,
+            str(score), va="center", color=_DARK_TEXT, fontsize=9, fontweight="500",
         )
 
-    fig.tight_layout()
+    fig.tight_layout(pad=2)
     _embed_figure(section, fig)
 
 
@@ -359,17 +394,18 @@ def _build_buzz_chart(parent: tk.Frame, stats: dict, pad: int):
 #  Section 3: 토픽별 수집 건수 비교
 # ═══════════════════════════════════════════════════
 def _build_topic_comparison(parent: tk.Frame, stats: dict, pad: int):
-    """토픽별 원본/필터후/최종 건수 그룹 막대 차트"""
+    """토픽별 원본/필터후/최종 건수 그룹 막대 차트 (고급 스타일)"""
     per_topic = stats.get("per_topic", {})
     if not per_topic:
+        section = tk.Frame(parent, bg=_DARK_BG)
+        section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+        _section_header(section, "토픽별 수집 건수 비교", 0)
+        tk.Label(section, text="데이터 없음", font=("Segoe UI", 10), fg=_DARK_MUTED, bg=_DARK_BG).pack(anchor=tk.W, pady=(0, 8))
         return
 
     section = tk.Frame(parent, bg=_DARK_BG)
-    section.pack(fill=tk.X, padx=pad, pady=(8, 8))
-    tk.Label(
-        section, text="토픽별 수집 건수 비교",
-        font=("Segoe UI", 12, "bold"), fg=_DARK_TEXT, bg=_DARK_BG,
-    ).pack(anchor=tk.W, pady=(0, 4))
+    section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+    _section_header(section, "토픽별 수집 건수 비교", 0)
 
     topics = list(per_topic.keys())
     raw_counts = [per_topic[t].get("raw_count", 0) for t in topics]
@@ -380,30 +416,31 @@ def _build_topic_comparison(parent: tk.Frame, stats: dict, pad: int):
     final_counts = [per_topic[t].get("final_count", 0) for t in topics]
     labels = [_truncate(t, 12) for t in topics]
 
-    fig = Figure(figsize=(9, 4), dpi=100)
+    import numpy as np
+    x = np.arange(len(topics))
+    width = 0.26
+
+    fig = Figure(figsize=(9, 4.2), dpi=100)
     fig.patch.set_facecolor(_DARK_BG)
     ax = fig.add_subplot(111)
     ax.set_facecolor(_DARK_CARD)
 
-    import numpy as np
-    x = np.arange(len(topics))
-    width = 0.25
-
-    ax.bar(x - width, raw_counts, width, label="원본 수집", color="#569cd6", alpha=0.8)
-    ax.bar(x, spam_removed, width, label="필터 후", color="#4ec9b0", alpha=0.8)
-    ax.bar(x + width, final_counts, width, label="최종 선별", color="#dcdcaa", alpha=0.8)
+    ax.bar(x - width, raw_counts, width, label="원본 수집", color="#0ea5e9", alpha=0.85, edgecolor=_DARK_CARD, linewidth=0.5)
+    ax.bar(x, spam_removed, width, label="필터 후", color="#22d3ee", alpha=0.85, edgecolor=_DARK_CARD, linewidth=0.5)
+    ax.bar(x + width, final_counts, width, label="최종 선별", color="#34d399", alpha=0.85, edgecolor=_DARK_CARD, linewidth=0.5)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=8)
-    ax.set_ylabel("건수", color=_DARK_MUTED, fontsize=9)
-    ax.legend(fontsize=8, facecolor=_DARK_CARD, edgecolor=_DARK_BORDER, labelcolor=_DARK_TEXT)
-    ax.tick_params(colors=_DARK_MUTED, labelsize=8)
+    ax.set_xticklabels(labels, rotation=28, ha="right", fontsize=9, color=_DARK_TEXT_SEC)
+    ax.set_ylabel("건수", color=_DARK_TEXT_SEC, fontsize=10)
+    ax.legend(fontsize=9, facecolor=_DARK_CARD, edgecolor=_DARK_BORDER, labelcolor=_DARK_TEXT, framealpha=0.95)
+    ax.tick_params(colors=_DARK_TEXT_SEC, labelsize=9)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_color(_DARK_BORDER)
     ax.spines["left"].set_color(_DARK_BORDER)
+    ax.grid(axis="y", alpha=0.2, color=_DARK_TEXT)
 
-    fig.tight_layout()
+    fig.tight_layout(pad=2)
     _embed_figure(section, fig)
 
 
@@ -411,15 +448,16 @@ def _build_topic_comparison(parent: tk.Frame, stats: dict, pad: int):
 #  Section 4: 필터링 분석 도넛 차트
 # ═══════════════════════════════════════════════════
 def _build_filter_chart(parent: tk.Frame, filter_info: dict, pad: int):
-    """필터링 효과 도넛 차트"""
+    """필터링 효과 도넛 차트 (고급 스타일)"""
     section = tk.Frame(parent, bg=_DARK_BG)
-    section.pack(fill=tk.X, padx=pad, pady=(8, 8))
-    tk.Label(
-        section, text=f"필터링 효과 분석 (필터율: {filter_info.get('filter_rate_pct', 0)}%)",
-        font=("Segoe UI", 12, "bold"), fg=_DARK_TEXT, bg=_DARK_BG,
-    ).pack(anchor=tk.W, pady=(0, 4))
+    section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+    _section_header(
+        section,
+        f"필터링 효과 분석 (필터율: {filter_info.get('filter_rate_pct', 0)}%)",
+        0,
+    )
 
-    fig = Figure(figsize=(9, 3.5), dpi=100)
+    fig = Figure(figsize=(9, 3.6), dpi=100)
     fig.patch.set_facecolor(_DARK_BG)
 
     # 좌측: 전체 결과 구성
@@ -433,24 +471,25 @@ def _build_filter_chart(parent: tk.Frame, filter_info: dict, pad: int):
         filter_info.get("duplicates_removed", 0),
     ]
     labels1 = ["최종 선별", "스팸 제거", "언어 필터", "기타 제거"]
-    colors1 = ["#4ec9b0", "#f44747", "#569cd6", "#858585"]
+    colors1 = ["#34d399", "#f87171", "#0ea5e9", _DARK_MUTED]
 
-    # 0인 항목 제외
     non_zero = [(s, l, c) for s, l, c in zip(sizes1, labels1, colors1) if s > 0]
     if non_zero:
         s, l, c = zip(*non_zero)
         wedges, texts, autotexts = ax1.pie(
             s, labels=l, colors=c, autopct="%1.0f%%",
-            startangle=90, pctdistance=0.75,
-            textprops={"color": _DARK_TEXT, "fontsize": 8},
+            startangle=90, pctdistance=0.72,
+            textprops={"color": _DARK_TEXT, "fontsize": 9},
+            wedgeprops={"edgecolor": _DARK_CARD, "linewidth": 1.2},
         )
         for at in autotexts:
-            at.set_fontsize(7)
-        centre_circle = plt.Circle((0, 0), 0.50, fc=_DARK_BG)
+            at.set_fontsize(8)
+            at.set_color(_DARK_TEXT)
+        centre_circle = plt.Circle((0, 0), 0.52, fc=_DARK_BG)
         ax1.add_artist(centre_circle)
-    ax1.set_title("결과 구성", color=_DARK_TEXT, fontsize=10, pad=10)
+    ax1.set_title("결과 구성", color=_DARK_TEXT, fontsize=11, fontweight="600", pad=12)
 
-    # 우측: 스팸 유형 상세 (있으면)
+    # 우측: 스팸 유형 상세
     ax2 = fig.add_subplot(122)
     ax2.set_facecolor(_DARK_BG)
 
@@ -458,35 +497,37 @@ def _build_filter_chart(parent: tk.Frame, filter_info: dict, pad: int):
     if spam_total > 0:
         sizes2 = [spam_total]
         labels2 = [f"스팸 {spam_total}건"]
-        colors2 = ["#f44747"]
+        colors2 = ["#f87171"]
         lang_total = filter_info.get("lang_filtered", 0)
         if lang_total > 0:
             sizes2.append(lang_total)
             labels2.append(f"언어필터 {lang_total}건")
-            colors2.append("#569cd6")
+            colors2.append("#0ea5e9")
 
         wedges2, texts2, autotexts2 = ax2.pie(
             sizes2, labels=labels2, colors=colors2, autopct="%1.0f%%",
-            startangle=90, pctdistance=0.75,
-            textprops={"color": _DARK_TEXT, "fontsize": 8},
+            startangle=90, pctdistance=0.72,
+            textprops={"color": _DARK_TEXT, "fontsize": 9},
+            wedgeprops={"edgecolor": _DARK_CARD, "linewidth": 1.2},
         )
         for at in autotexts2:
-            at.set_fontsize(7)
-        centre2 = plt.Circle((0, 0), 0.50, fc=_DARK_BG)
+            at.set_fontsize(8)
+            at.set_color(_DARK_TEXT)
+        centre2 = plt.Circle((0, 0), 0.52, fc=_DARK_BG)
         ax2.add_artist(centre2)
     else:
         ax2.text(
             0.5, 0.5, "스팸 0건\n필터링 없음",
-            ha="center", va="center", color=_DARK_MUTED, fontsize=10,
+            ha="center", va="center", color=_DARK_MUTED, fontsize=11,
             transform=ax2.transAxes,
         )
         ax2.set_xlim(0, 1)
         ax2.set_ylim(0, 1)
         ax2.axis("off")
 
-    ax2.set_title("필터 상세", color=_DARK_TEXT, fontsize=10, pad=10)
+    ax2.set_title("필터 상세", color=_DARK_TEXT, fontsize=11, fontweight="600", pad=12)
 
-    fig.tight_layout()
+    fig.tight_layout(pad=2)
     _embed_figure(section, fig)
 
 
@@ -494,16 +535,17 @@ def _build_filter_chart(parent: tk.Frame, filter_info: dict, pad: int):
 #  Section 5: 출처 도메인 TOP 15
 # ═══════════════════════════════════════════════════
 def _build_domain_chart(parent: tk.Frame, domain_stats: list, pad: int):
-    """가장 많이 인용된 도메인 상위 15개 가로 막대 차트"""
+    """가장 많이 인용된 도메인 상위 15개 가로 막대 차트 (고급 스타일)"""
     if not domain_stats:
+        section = tk.Frame(parent, bg=_DARK_BG)
+        section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+        _section_header(section, "출처 도메인 TOP 15", 0)
+        tk.Label(section, text="데이터 없음", font=("Segoe UI", 10), fg=_DARK_MUTED, bg=_DARK_BG).pack(anchor=tk.W, pady=(0, 8))
         return
 
     section = tk.Frame(parent, bg=_DARK_BG)
-    section.pack(fill=tk.X, padx=pad, pady=(8, 8))
-    tk.Label(
-        section, text="출처 도메인 TOP 15",
-        font=("Segoe UI", 12, "bold"), fg=_DARK_TEXT, bg=_DARK_BG,
-    ).pack(anchor=tk.W, pady=(0, 4))
+    section.pack(fill=tk.X, padx=pad, pady=(12, 8))
+    _section_header(section, "출처 도메인 TOP 15", 0)
 
     top = domain_stats[:15]
     labels = [d for d, _ in reversed(top)]
@@ -511,26 +553,27 @@ def _build_domain_chart(parent: tk.Frame, domain_stats: list, pad: int):
     colors = [_CHART_COLORS[i % len(_CHART_COLORS)] for i in range(len(top))]
     colors.reverse()
 
-    fig = Figure(figsize=(9, max(3, len(top) * 0.3)), dpi=100)
+    fig = Figure(figsize=(9, max(3.2, len(top) * 0.32)), dpi=100)
     fig.patch.set_facecolor(_DARK_BG)
     ax = fig.add_subplot(111)
     ax.set_facecolor(_DARK_CARD)
 
-    bars = ax.barh(labels, counts, color=colors, height=0.6)
-    ax.set_xlabel("인용 횟수", color=_DARK_MUTED, fontsize=9)
-    ax.tick_params(colors=_DARK_MUTED, labelsize=8)
+    bars = ax.barh(labels, counts, color=colors, height=0.65, edgecolor=_DARK_CARD, linewidth=0.8)
+    ax.set_xlabel("인용 횟수", color=_DARK_TEXT_SEC, fontsize=10)
+    ax.tick_params(colors=_DARK_TEXT_SEC, labelsize=9)
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.spines["bottom"].set_color(_DARK_BORDER)
     ax.spines["left"].set_color(_DARK_BORDER)
+    ax.grid(axis="x", alpha=0.2, color=_DARK_TEXT)
 
     for bar, count in zip(bars, counts):
         ax.text(
-            bar.get_width() + 0.3, bar.get_y() + bar.get_height() / 2,
-            str(count), va="center", color=_DARK_TEXT, fontsize=8,
+            bar.get_width() + 0.4, bar.get_y() + bar.get_height() / 2,
+            str(count), va="center", color=_DARK_TEXT, fontsize=9, fontweight="500",
         )
 
-    fig.tight_layout()
+    fig.tight_layout(pad=2)
     _embed_figure(section, fig)
 
 
@@ -538,13 +581,10 @@ def _build_domain_chart(parent: tk.Frame, domain_stats: list, pad: int):
 #  Section 6: 토픽별 상세 테이블
 # ═══════════════════════════════════════════════════
 def _build_detail_table(parent: tk.Frame, table_data: list, pad: int):
-    """토픽별 상세 통계 Treeview 테이블"""
+    """토픽별 상세 통계 Treeview 테이블 (고급 스타일)"""
     section = tk.Frame(parent, bg=_DARK_BG)
-    section.pack(fill=tk.X, padx=pad, pady=(8, pad))
-    tk.Label(
-        section, text="토픽별 상세 통계",
-        font=("Segoe UI", 12, "bold"), fg=_DARK_TEXT, bg=_DARK_BG,
-    ).pack(anchor=tk.W, pady=(0, 4))
+    section.pack(fill=tk.X, padx=pad, pady=(12, pad))
+    _section_header(section, "토픽별 상세 통계", 0)
 
     columns = ("topic", "time", "raw", "spam", "lang", "trans", "final", "domain")
     tree = ttk.Treeview(section, columns=columns, show="headings", height=min(len(table_data) + 1, 15))
@@ -564,7 +604,7 @@ def _build_detail_table(parent: tk.Frame, table_data: list, pad: int):
         tree.heading(col, text=heading)
         tree.column(col, width=width, anchor=tk.CENTER if col != "domain" else tk.W)
 
-    # 다크 테마 스타일
+    # 고급 다크 테마 + 교차 행 색상
     style = ttk.Style()
     style.configure(
         "Stats.Treeview",
@@ -573,16 +613,25 @@ def _build_detail_table(parent: tk.Frame, table_data: list, pad: int):
         fieldbackground=_DARK_CARD,
         borderwidth=0,
         font=("Segoe UI", 9),
+        rowheight=24,
     )
     style.configure(
         "Stats.Treeview.Heading",
-        background=_DARK_BORDER,
-        foreground=_DARK_TEXT,
-        font=("Segoe UI", 9, "bold"),
+        background=_DARK_ACCENT_DIM,
+        foreground="#fff",
+        font=("Segoe UI Semibold", 9),
+        padding=(8, 6),
     )
+    style.map(
+        "Stats.Treeview",
+        background=[("alternate", _DARK_CARD_HOVER)],
+        foreground=[("selected", _DARK_TEXT)],
+    )
+    style.map("Stats.Treeview.Heading", background=[("active", _DARK_ACCENT)])
     tree.configure(style="Stats.Treeview")
 
-    for row in table_data:
+    for i, row in enumerate(table_data):
+        tag = "odd" if i % 2 == 0 else "even"
         tree.insert("", tk.END, values=(
             row["topic"],
             f"{row['time']:.1f}초",
@@ -592,7 +641,11 @@ def _build_detail_table(parent: tk.Frame, table_data: list, pad: int):
             f"{row['translated']}건",
             f"{row['final']}건",
             row["top_domain"],
-        ))
+        ), tags=(tag,))
+
+    # 교차 행 배경
+    tree.tag_configure("odd", background=_DARK_CARD)
+    tree.tag_configure("even", background=_DARK_CARD_HOVER)
 
     tree.pack(fill=tk.X, pady=(0, 8))
 
@@ -601,13 +654,13 @@ def _build_detail_table(parent: tk.Frame, table_data: list, pad: int):
 #  matplotlib 미설치 시 안내
 # ═══════════════════════════════════════════════════
 def _build_no_matplotlib_notice(parent: tk.Frame, pad: int):
-    """matplotlib 미설치 시 텍스트 안내"""
-    section = tk.Frame(parent, bg=_DARK_CARD, padx=20, pady=16)
+    """matplotlib 미설치 시 텍스트 안내 (고급 카드 스타일)"""
+    section = tk.Frame(parent, bg=_DARK_CARD, padx=20, pady=18)
     section.pack(fill=tk.X, padx=pad, pady=8)
     tk.Label(
         section,
         text="차트를 표시하려면 matplotlib을 설치하세요:\npip install matplotlib",
-        font=("Segoe UI", 10), fg="#ff8c00", bg=_DARK_CARD,
+        font=("Segoe UI", 10), fg=_DARK_ACCENT, bg=_DARK_CARD,
         justify=tk.LEFT,
     ).pack(anchor=tk.W)
 
@@ -626,10 +679,14 @@ def _embed_figure(parent: tk.Frame, fig: Figure):
     canvas.get_tk_widget().pack(fill=tk.X, pady=(0, 4))
 
 
+# U-5: 마지막 PDF 저장 경로 기억 (다음 저장 시 기본 폴더로 사용)
+_last_pdf_dir: Path | None = None
+
+
 # ═══════════════════════════════════════════════════
 #  PDF 내보내기
 # ═══════════════════════════════════════════════════
-def _export_pdf(stats: dict, search_data: dict, parent_win: tk.Toplevel):
+def _export_pdf(stats: dict, search_data: dict, parent_win: tk.Toplevel, initial_pdf_dir: str | None = None):
     """
     통계 대시보드를 PDF로 내보냅니다.
 
@@ -652,8 +709,14 @@ def _export_pdf(stats: dict, search_data: dict, parent_win: tk.Toplevel):
 
     _apply_korean_font()
 
-    # 저장 경로 선택
-    default_dir = BASE / "IMoutput"
+    # 저장 경로 선택 (U-5 + 추가개발-5: 설정 경로 → 세션 기억 → IMoutput)
+    global _last_pdf_dir
+    if initial_pdf_dir and Path(initial_pdf_dir).is_dir():
+        default_dir = Path(initial_pdf_dir)
+    elif _last_pdf_dir and _last_pdf_dir.is_dir():
+        default_dir = _last_pdf_dir
+    else:
+        default_dir = BASE / "IMoutput"
     try:
         default_dir.mkdir(exist_ok=True)
     except OSError:
@@ -793,7 +856,7 @@ def _export_pdf(stats: dict, search_data: dict, parent_win: tk.Toplevel):
 
                 for key, cell in table.get_celld().items():
                     if key[0] == 0:
-                        cell.set_facecolor("#0078d4")
+                        cell.set_facecolor("#0ea5e9")
                         cell.set_text_props(color="white", fontweight="bold")
                     else:
                         cell.set_facecolor("#f8f8f8" if key[0] % 2 == 0 else "white")
@@ -807,6 +870,7 @@ def _export_pdf(stats: dict, search_data: dict, parent_win: tk.Toplevel):
             f"통계 리포트가 저장되었습니다.\n\n{filepath}",
             parent=parent_win,
         )
+        _last_pdf_dir = Path(filepath).parent
         log.info("통계 PDF 저장: %s", filepath)
 
     except Exception as e:
