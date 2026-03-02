@@ -1,0 +1,4 @@
+pyperclip>=1.8.0
+duckduckgo-search>=7.0.0
+lxml>=5.0
+pyinstaller>=6.0
