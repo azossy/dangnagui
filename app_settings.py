@@ -127,9 +127,7 @@ def save_settings(settings: dict) -> bool:
 # ═══════════════════════════════════════════════════
 #  웹 검색으로 관련 사이트 탐색 (DuckDuckGo + timeout)
 # ═══════════════════════════════════════════════════
-def find_related_sites_via_web_search(
-    topic_name: str, max_results: int = 100,
-) -> list:
+def find_related_sites_via_web_search(topic_name: str) -> list:
     key = (topic_name or "").strip()
     if not key:
         return []
@@ -144,10 +142,8 @@ def find_related_sites_via_web_search(
             f"{key} 카페", f"{key} 블로그",
         ]
         for q in queries:
-            if len(sites) >= max_results:
-                break
             try:
-                for r in DDGS(timeout=15).text(q, max_results=30):
+                for r in DDGS(timeout=15).text(q, max_results=200):
                     href = (r.get("href") or r.get("url") or "").strip()
                     title = (r.get("title") or "").strip() or href
                     if not href or "javascript:" in href:
@@ -160,8 +156,6 @@ def find_related_sites_via_web_search(
                         if norm and norm not in seen:
                             seen.add(norm)
                             sites.append({"name": title[:80], "url": href})
-                            if len(sites) >= max_results:
-                                break
                     except Exception:
                         pass
             except Exception as e:

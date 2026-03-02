@@ -59,7 +59,7 @@ log = setup_logger()
 # ═══════════════════════════════════════════════════
 #  상수
 # ═══════════════════════════════════════════════════
-APP_VERSION = "임금님귀 v1.1"
+APP_VERSION = "임금님귀 v1.2"
 COPYRIGHT = "copyright by 챠리"
 EMAIL = "challychoi@me.com"
 UPDATE_WARN_DAYS = 30

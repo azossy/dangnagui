@@ -208,7 +208,7 @@ def search_topics_online(
                 break
             try:
                 for r in DDGS(timeout=20).text(
-                    q, max_results=min(target, 20), timelimit=timelimit,
+                    q, max_results=target, timelimit=timelimit,
                 ):
                     title = (r.get("title") or "").strip()
                     body = (r.get("body") or "").strip()
@@ -230,7 +230,7 @@ def search_topics_online(
 
         try:
             for r in DDGS(timeout=20).news(
-                clean_name, max_results=min(target, 15), timelimit=timelimit,
+                clean_name, max_results=target, timelimit=timelimit,
             ):
                 title = (r.get("title") or "").strip()
                 body = (r.get("body") or "").strip()
