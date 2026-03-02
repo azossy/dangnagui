@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 >nul
-title dangnagui v1.3.0 build
+title dangnagui v1.3.1 build
 echo.
 echo =========================================
-echo   dangnagui v1.3.0 build system
+echo   dangnagui v1.3.1 build system
 echo   1,000+ sites / 60,000+ boards
 echo =========================================
 echo.
@@ -56,7 +56,7 @@ if defined ISCC_PATH (
     if errorlevel 1 (
         echo       [WARN] Installer creation failed.
     ) else (
-        echo       Installer: Output\dangnagui-setup-v1.3.0.exe
+        echo       Installer: Output\dangnagui-setup-v1.3.1.exe
     )
 ) else (
     echo       [INFO] Inno Setup not found.

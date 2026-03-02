@@ -74,7 +74,7 @@ _SPAM_KEYWORDS = frozenset([
     "대출", "당일대출", "무직자대출", "급전", "사채",
     # 마케팅 유도
     "클릭하세요", "지금 확인", "무료 체험", "가입하면",
-    "텔레그램 문의", "카톡 문의", "문의", "상담",
+    "텔레그램 문의", "카톡 문의",
     # 허위/과장
     "월 수익", "수익 인증", "재테크 비법", "부업 추천",
     "하루 만에", "100% 보장", "검증완료", "수익보장",
@@ -243,20 +243,38 @@ def _try_translate_text(text: str) -> str:
 
 # ═══════════════════════════════════════════════════
 #  사이트 config 접근 (레거시 호환 + 암호화DB 통합)
+#  세션 내 캐시로 반복 복호화/파싱 방지
 # ═══════════════════════════════════════════════════
+_cached_db: dict | None = None
+_cached_db_is_encrypted = False
+
+
+def invalidate_db_cache():
+    """DB 캐시를 무효화합니다 (갱신 후 호출)."""
+    global _cached_db, _cached_db_is_encrypted
+    _cached_db = None
+    _cached_db_is_encrypted = False
+
+
 def _load_sites_config() -> dict:
-    """사이트 설정을 로드합니다 (암호화 DB 우선, 레거시 폴백)"""
-    # v1.3.0: 암호화 DB에서 먼저 로드 시도
+    """사이트 설정을 로드합니다 (암호화 DB 우선, 레거시 폴백). 세션 내 캐시 적용."""
+    global _cached_db, _cached_db_is_encrypted
+    if _cached_db is not None:
+        return _cached_db
+
     if _HAS_DB_CRYPTO:
         try:
             db = load_encrypted_db()
             if db and db.get("sites"):
+                _cached_db = db
+                _cached_db_is_encrypted = True
                 return db
         except Exception as e:
             log.debug("암호화 DB 로드 실패, 레거시 폴백: %s", e)
 
-    # 레거시 sites_config.json 폴백
-    return load_json(SITES_CONFIG)
+    result = load_json(SITES_CONFIG)
+    _cached_db = result
+    return result
 
 
 def _extract_domain(url: str) -> str | None:
@@ -283,12 +301,9 @@ def _get_topic_domains(topic_name: str) -> list[str]:
     Returns:
         list[str]: 도메인 목록 (예: ["clien.net", "quasarzone.com"])
     """
-    if not _HAS_DB_CRYPTO:
-        return []
-
     try:
-        db = load_encrypted_db()
-        if not db:
+        db = _load_sites_config()
+        if not db or not db.get("sites"):
             return []
 
         clean_name = strip_leading_emoji(topic_name) or topic_name
@@ -331,21 +346,16 @@ def _get_topic_domains(topic_name: str) -> list[str]:
 #  사이트·게시판 집계 (UI 표시용)
 # ═══════════════════════════════════════════════════
 def get_site_board_counts() -> tuple[int, int]:
-    """전체 사이트 수, 게시판 수를 반환 (메인 화면 표시용)"""
-    # v1.3.0: 암호화 DB 우선
-    if _HAS_DB_CRYPTO:
-        try:
-            db = load_encrypted_db()
-            if db and db.get("meta"):
-                return (
-                    db["meta"].get("total_sites", 0),
-                    db["meta"].get("total_boards", 0),
-                )
-        except Exception:
-            pass
+    """전체 사이트 수, 게시판 수를 반환 (메인 화면 표시용). 캐시 활용."""
+    cfg = _load_sites_config()
+    if cfg and cfg.get("meta"):
+        return (
+            cfg["meta"].get("total_sites", 0),
+            cfg["meta"].get("total_boards", 0),
+        )
 
-    # 레거시 폴백
-    cfg = load_json(SITES_CONFIG)
+    if not cfg:
+        cfg = load_json(SITES_CONFIG)
     if not cfg:
         return 0, 0
     domains: set[str] = set()

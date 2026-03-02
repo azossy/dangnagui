@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-게시판 검색기 — 임금님귀 v1.3.0
+게시판 검색기 — 임금님귀 v1.3.1
 ═══════════════════════════════════════════════════════
 국내 1,000+ 사이트 / 60,000+ 게시판 실시간 분석
 광고/스팸 3중 필터 · 암호화 DB · 통계 대시보드 · PDF 내보내기
@@ -42,6 +42,7 @@ _stop_event = threading.Event()
 
 # v1.3.0: 최근 검색 데이터 보관 (통계 대시보드용)
 _last_search_data: dict | None = None
+_data_lock = threading.Lock()
 
 PLACEHOLDER = "▶ 스타트를 눌러 리포트를 생성하세요"
 
@@ -120,7 +121,8 @@ def run_report(progress_callback=None, settings=None, stop_event=None):
         data = enrich_with_buzz_scores(data)
 
         # 최근 검색 데이터 보관 (통계 보기 버튼에서 사용)
-        _last_search_data = data
+        with _data_lock:
+            _last_search_data = data
 
         # 보도자료 스타일 리포트 생성
         output, total = format_for_messenger(data, settings)
@@ -1014,11 +1016,18 @@ def main():
     }
 
     root = tk.Tk()
-    root.title("게시판 검색기")
-    root.geometry("680x640")
-    root.minsize(560, 500)
+    root.title(f"게시판 검색기 — {APP_VERSION}")
+    root.geometry("720x680")
+    root.minsize(600, 520)
     root.configure(bg=COLORS["bg"])
     root.resizable(True, True)
+
+    ico_path = BASE / "dangnagui.ico"
+    if ico_path.exists():
+        try:
+            root.iconbitmap(str(ico_path))
+        except Exception:
+            pass
 
     FT = ("Segoe UI", 18, "bold")
     FS = ("Segoe UI", 10)
@@ -1076,6 +1085,11 @@ def main():
             return
 
         def _after():
+            try:
+                from report_engine import invalidate_db_cache
+                invalidate_db_cache()
+            except Exception:
+                pass
             summary_var.set(_settings_summary())
             s, b = get_site_board_counts_display()
             total_var.set(f"{s:,}개 사이트 · {b:,}개 게시판 검색")
@@ -1111,7 +1125,9 @@ def main():
     # v1.3.0: 통계 보기 버튼
     def _open_stats():
         """통계 대시보드 창을 엽니다. 검색 데이터가 없으면 안내 메시지."""
-        if _last_search_data is None:
+        with _data_lock:
+            search_data = _last_search_data
+        if search_data is None:
             messagebox.showinfo(
                 "통계 보기",
                 "아직 검색 결과가 없습니다.\n\n"
@@ -1121,8 +1137,8 @@ def main():
             return
         try:
             from stats_window import open_stats_window
-            stats = _last_search_data.get("통계", {})
-            open_stats_window(root, stats, _last_search_data)
+            stats = search_data.get("통계", {})
+            open_stats_window(root, stats, search_data)
         except ImportError:
             messagebox.showwarning("통계 보기", "stats_window 모듈을 로드할 수 없습니다.")
         except Exception as e:
@@ -1411,14 +1427,37 @@ def main():
     text_area.bind("<FocusIn>", lambda e: text_area.configure(highlightthickness=1, highlightbackground=COLORS["ac"]))
     text_area.bind("<FocusOut>", lambda e: text_area.configure(highlightthickness=0))
 
-    # ── 하단 저작권 ──
-    btm = tk.Frame(mf, bg=COLORS["bg"])
-    btm.pack(fill=tk.X, pady=(8, 0))
-    cr = tk.Label(btm, text=COPYRIGHT, font=("Segoe UI", 8), fg="#555555", bg=COLORS["bg"], cursor="hand2")
+    # ── 하단 상태바 (상용 수준) ──
+    status_bar = tk.Frame(mf, bg=COLORS["card"], highlightbackground=COLORS["border"], highlightthickness=1)
+    status_bar.pack(fill=tk.X, pady=(8, 0))
+    sb_inner = tk.Frame(status_bar, bg=COLORS["card"], padx=10, pady=3)
+    sb_inner.pack(fill=tk.X)
+
+    db_status = "암호화 DB" if sc > 0 else "DB 미설정"
+    db_color = "#4ec9b0" if sc > 0 else "#ff8c00"
+    tk.Label(
+        sb_inner, text=f"● {db_status}", font=("Segoe UI", 8),
+        fg=db_color, bg=COLORS["card"],
+    ).pack(side=tk.LEFT, padx=(0, 12))
+
+    tk.Label(
+        sb_inner, text="Ctrl+R 시작 · Ctrl+S 저장 · Ctrl+C 복사",
+        font=("Segoe UI", 8), fg="#505050", bg=COLORS["card"],
+    ).pack(side=tk.LEFT)
+
+    cr = tk.Label(
+        sb_inner, text=f"{COPYRIGHT} · {EMAIL}",
+        font=("Segoe UI", 8), fg="#555555", bg=COLORS["card"], cursor="hand2",
+    )
     cr.pack(side=tk.RIGHT)
     cr.bind("<Enter>", lambda e: cr.config(fg=COLORS["ac"]))
     cr.bind("<Leave>", lambda e: cr.config(fg="#555555"))
     cr.bind("<Button-1>", lambda e: webbrowser.open(f"mailto:{EMAIL}"))
+
+    # ── 키보드 단축키 ──
+    root.bind("<Control-r>", lambda e: on_start_stop())
+    root.bind("<Control-s>", lambda e: on_save_file())
+    root.bind("<F5>", lambda e: on_start_stop())
 
     # ── 갱신 알림 (인라인 배너 — 팝업 대신) ──
     def _check_update():

@@ -1,6 +1,6 @@
 ══════════════════════════════════════════════════════════════
   당나귀 게시판검색기 (dangnagui)
-  임금님귀 v1.3.0
+  임금님귀 v1.3.1
   copyright by 챠리 (challychoi@me.com)
 ══════════════════════════════════════════════════════════════
 
@@ -39,7 +39,7 @@
 
   ■ 인스톨러로 설치 (권장)
 
-    1. dangnagui-setup-v1.3.0.exe를 다운로드합니다.
+    1. dangnagui-setup-v1.3.1.exe를 다운로드합니다.
        → https://github.com/azossy/dangnagui/releases/latest
 
     2. 다운로드한 파일을 더블클릭하여 실행합니다.
@@ -62,7 +62,7 @@
 
   ■ 포터블(USB) 설치 (설치 없이 사용)
 
-    1. dangnagui-v1.3.0-portable.zip을 다운로드합니다.
+    1. dangnagui-v1.3.1-portable.zip을 다운로드합니다.
        → https://github.com/azossy/dangnagui/releases/latest
 
     2. 원하는 위치에 압축을 해제합니다.
@@ -173,5 +173,5 @@
 
 
 ══════════════════════════════════════════════════════════════
-  dangnagui v1.3.0 · copyright by 챠리
+  dangnagui v1.3.1 · copyright by 챠리
 ══════════════════════════════════════════════════════════════

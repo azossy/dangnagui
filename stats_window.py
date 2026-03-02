@@ -186,9 +186,31 @@ def open_stats_window(parent: tk.Tk, stats_data: dict, search_data: dict):
     )
 
     def _mw(e):
-        canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
-    win.bind_all("<MouseWheel>", _mw)
-    win.protocol("WM_DELETE_WINDOW", lambda: (_unbind_mw(win), win.destroy()))
+        if not canvas.winfo_exists():
+            return
+        w = e.widget
+        while w:
+            if w is win:
+                canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
+                return
+            try:
+                w = w.master
+            except AttributeError:
+                return
+
+    _mw_bind_id = win.bind_all("<MouseWheel>", _mw, add=True)
+
+    def _on_close():
+        _safe_unbind(win, _mw_bind_id)
+        for fig in _embedded_figures:
+            try:
+                plt.close(fig)
+            except Exception:
+                pass
+        _embedded_figures.clear()
+        win.destroy()
+
+    win.protocol("WM_DELETE_WINDOW", _on_close)
 
     vsb.pack(side=tk.RIGHT, fill=tk.Y)
     canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -227,10 +249,11 @@ def open_stats_window(parent: tk.Tk, stats_data: dict, search_data: dict):
     _build_detail_table(main_frame, table_data, pad)
 
 
-def _unbind_mw(win):
-    """MouseWheel 바인딩 해제 (메모리 누수 방지)"""
+def _safe_unbind(win, bind_id):
+    """특정 bind ID만 해제하여 다른 윈도우의 바인딩을 보존합니다."""
     try:
-        win.unbind_all("<MouseWheel>")
+        if bind_id:
+            win.unbind("<MouseWheel>", bind_id)
     except Exception:
         pass
 
@@ -592,8 +615,12 @@ def _build_no_matplotlib_notice(parent: tk.Frame, pad: int):
 # ═══════════════════════════════════════════════════
 #  matplotlib Figure를 tkinter에 임베드
 # ═══════════════════════════════════════════════════
+_embedded_figures: list = []
+
+
 def _embed_figure(parent: tk.Frame, fig: Figure):
     """matplotlib Figure를 tkinter Frame에 임베드합니다."""
+    _embedded_figures.append(fig)
     canvas = FigureCanvasTkAgg(fig, master=parent)
     canvas.draw()
     canvas.get_tk_widget().pack(fill=tk.X, pady=(0, 4))

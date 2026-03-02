@@ -66,7 +66,7 @@ log = setup_logger()
 # ═══════════════════════════════════════════════════
 #  상수
 # ═══════════════════════════════════════════════════
-APP_VERSION = "임금님귀 v1.3.0"
+APP_VERSION = "임금님귀 v1.3.1"
 COPYRIGHT = "copyright by 챠리"
 EMAIL = "challychoi@me.com"
 UPDATE_WARN_DAYS = 30
@@ -222,7 +222,7 @@ def acquire_instance_lock() -> bool:
         _lock_fd = open(lock_path, "a+")
         if sys.platform == "win32":
             import msvcrt
-            msvcrt.locking(_lock_fd.fileno(), msvcrt.LK_NBLCK, 1)
+            msvcrt.locking(_lock_fd.fileno(), msvcrt.LK_NBLCK, 32)
         else:
             import fcntl
             fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)

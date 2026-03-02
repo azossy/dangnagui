@@ -388,15 +388,18 @@ def _atomic_write_bytes(path: Path, data: bytes) -> None:
 
     # 임시 파일에 쓰기 → 원자적 교체
     fd, tmp = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+    fd_closed = False
     try:
         os.write(fd, data)
         os.close(fd)
+        fd_closed = True
         os.replace(tmp, str(path))
     except Exception:
-        try:
-            os.close(fd)
-        except OSError:
-            pass
+        if not fd_closed:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
         try:
             os.unlink(tmp)
         except OSError:

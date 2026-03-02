@@ -1,6 +1,6 @@
 # 당나귀 게시판검색기 (dangnagui)
 
-> 임금님귀 v1.3.0 · copyright by 챠리 (challychoi@me.com)
+> 임금님귀 v1.3.1 · copyright by 챠리 (challychoi@me.com)
 
 **국내 1,000+ 사이트 / 60,000+ 게시판** 실시간 분석 엔진.  
 토픽별 핫키워드 · 네티즌 의견을 **DuckDuckGo 실시간 검색**으로 수집하여  
@@ -39,7 +39,7 @@ Microsoft Fluent 다크 UI · USB 포터블 · Windows 10/11 지원.
 
 ### 방법 1 — 인스톨러 (권장)
 
-1. **[dangnagui-setup-v1.3.0.exe](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
+1. **[dangnagui-setup-v1.3.1.exe](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
 2. 다운로드한 파일을 더블클릭하여 실행
 3. 설치 경로 선택 (기본: `C:\Program Files\dangnagui`)
 4. "설치" 클릭 → 완료
@@ -49,7 +49,7 @@ Microsoft Fluent 다크 UI · USB 포터블 · Windows 10/11 지원.
 
 ### 방법 2 — 포터블 ZIP (USB / 설치 없이 사용)
 
-1. **[dangnagui-v1.3.0-portable.zip](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
+1. **[dangnagui-v1.3.1-portable.zip](https://github.com/azossy/dangnagui/releases/latest)** 다운로드
 2. 원하는 위치(USB, 바탕화면 등)에 압축 해제
 3. 폴더 안의 `dangnagui.exe` 실행
 
@@ -89,7 +89,7 @@ build.bat
 ```
 
 - PyInstaller → `dist\dangnagui\dangnagui.exe`
-- [Inno Setup 6](https://jrsoftware.org/isinfo.php) 설치 시 → `Output\dangnagui-setup-v1.3.0.exe` 자동 생성
+- [Inno Setup 6](https://jrsoftware.org/isinfo.php) 설치 시 → `Output\dangnagui-setup-v1.3.1.exe` 자동 생성
 
 ### 프로젝트 구조
 
