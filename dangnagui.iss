@@ -1,6 +1,6 @@
 #define MyAppName "dangnagui"
-#define MyAppDisplayName "dangnagui"
-#define MyAppVersion "1.2.2"
+#define MyAppDisplayName "당나귀 게시판검색기"
+#define MyAppVersion "1.2.3"
 #define MyAppPublisher "Chally"
 #define MyAppURL "mailto:challychoi@me.com"
 #define MyAppExeName "dangnagui.exe"
@@ -16,7 +16,9 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppDisplayName}
 OutputDir=Output
-OutputBaseFilename=dangnagui-setup-v1.2.2
+OutputBaseFilename=dangnagui-setup-v1.2.3
+SetupIconFile=dangnagui.ico
+UninstallDisplayIcon={app}\dangnagui.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -38,15 +40,16 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "dist\dangnagui\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "readme.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dangnagui.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#MyAppDisplayName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{group}\{#MyAppDisplayName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\dangnagui.ico"
 Name: "{group}\Readme"; Filename: "{app}\readme.txt"
 Name: "{group}\{cm:UninstallProgram,{#MyAppDisplayName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppDisplayName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppDisplayName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\dangnagui.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Launch dangnagui"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppDisplayName}"; Flags: nowait postinstall skipifsilent
 
 [Dirs]
 Name: "{app}\IMoutput"; Permissions: users-modify

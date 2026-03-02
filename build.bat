@@ -24,7 +24,7 @@ if exist "__pycache__" rmdir /s /q "__pycache__"
 echo       Done
 
 echo [3/5] Building dangnagui.exe with PyInstaller...
-pyinstaller --name dangnagui --onedir --noconsole --noconfirm --clean --add-data "common.py;." --add-data "app_settings.py;." --add-data "report_engine.py;." --add-data "sites_config.json;." --hidden-import pyperclip --hidden-import duckduckgo_search --hidden-import lxml --hidden-import lxml.etree main.py
+pyinstaller --name dangnagui --onedir --noconsole --noconfirm --clean --icon "dangnagui.ico" --add-data "common.py;." --add-data "app_settings.py;." --add-data "report_engine.py;." --add-data "dangnagui.ico;." --hidden-import pyperclip --hidden-import duckduckgo_search --hidden-import lxml --hidden-import lxml.etree main.py
 if errorlevel 1 (
     echo [ERROR] PyInstaller build failed.
     pause
@@ -35,6 +35,7 @@ echo       Done
 echo [4/5] Setting up distribution folder...
 if exist "readme.txt" copy /y "readme.txt" "dist\dangnagui\readme.txt" >nul
 if exist "sites_config.json" copy /y "sites_config.json" "dist\dangnagui\sites_config.json" >nul
+if exist "dangnagui.ico" copy /y "dangnagui.ico" "dist\dangnagui\dangnagui.ico" >nul
 for %%f in (*.md) do copy /y "%%f" "dist\dangnagui\%%f" >nul
 if not exist "dist\dangnagui\IMoutput" mkdir "dist\dangnagui\IMoutput"
 if not exist "dist\dangnagui\logs" mkdir "dist\dangnagui\logs"

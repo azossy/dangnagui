@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-게시판 검색기 — 임금님귀 v1.2.2
+게시판 검색기 — 임금님귀 v1.2.3
 DuckDuckGo 실시간 검색 · Microsoft Fluent 스타일 · USB 포터블
 copyright by 챠리 (challychoi@me.com)
 """
