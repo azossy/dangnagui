@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""게시판 검색기 — 리포트 파싱·포맷·사이트 집계 (상용 v0.9)
-동적 카테고리 파싱 + 커스텀 토픽 지원 + 정확한 도메인 카운팅
+"""게시판 검색기 — 실시간 웹 검색 + 리포트 포맷 엔진
+DuckDuckGo 기반 실시간 검색 → 토픽별 핫키워드 리포트 생성
 """
 from __future__ import annotations
 
@@ -16,6 +16,12 @@ from common import (
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
     load_json, log, strip_leading_emoji,
 )
+
+_HAS_DDGS = True
+try:
+    from duckduckgo_search import DDGS
+except ImportError:
+    _HAS_DDGS = False
 
 LINE_WIDTH = 24
 SUMMARY_WIDTH = 32
@@ -146,123 +152,117 @@ def check_sample_urls(sample_size: int = 20, timeout: int = 3) -> int:
 
 
 # ═══════════════════════════════════════════════════
-#  진행률 — ~40회 UI 갱신, 총 0.4초 지연 (UX 시각 피드백)
+#  시간 → DuckDuckGo timelimit 변환
 # ═══════════════════════════════════════════════════
-def iter_sites_progress(progress_callback=None, stop_event=None):
-    if not progress_callback:
-        return
-    cfg = _load_sites_config()
-    if not cfg:
-        return
-    items: list[tuple[str, str, str]] = []
-    for cat_name, sites in cfg.get("categories", {}).items():
-        if not isinstance(sites, list):
-            continue
-        for s in sites:
-            items.append((cat_name, s.get("name", ""), s.get("url", "")))
-    if not items:
-        return
-    total = len(items)
-    domains: set[str] = set()
-    step = max(1, total // 40)
-    for idx, (cat_name, site_name, url) in enumerate(items):
+def _hours_to_timelimit(hours: int) -> str:
+    if hours <= 24:
+        return "d"
+    if hours <= 168:
+        return "w"
+    return "m"
+
+
+def _timelimit_label(tl: str) -> str:
+    return {"d": "24시간", "w": "1주일", "m": "1개월"}.get(tl, tl)
+
+
+# ═══════════════════════════════════════════════════
+#  실시간 웹 검색 — DuckDuckGo text + news
+# ═══════════════════════════════════════════════════
+def search_topics_online(
+    topic_config: dict[str, int],
+    hours: int = 36,
+    progress_callback=None,
+    stop_event=None,
+) -> dict:
+    """각 토픽에 대해 DuckDuckGo 실시간 검색을 수행하여 핫키워드를 수집한다."""
+    if not _HAS_DDGS:
+        log.error("duckduckgo_search 미설치 — pip install duckduckgo-search")
+        return {"카테고리": {}}
+
+    timelimit = _hours_to_timelimit(hours)
+    total = len(topic_config)
+    categories: dict[str, list] = {}
+
+    for idx, (topic_name, kw_count) in enumerate(topic_config.items()):
         if stop_event and stop_event.is_set():
-            return
-        d = _extract_domain(url)
-        if d:
-            domains.add(d)
-        if idx % step == 0 or idx == total - 1:
-            progress_callback(
-                len(domains), idx + 1, len(domains), total,
-                cat_name, site_name,
-            )
-            if idx < total - 1:
-                time.sleep(0.01)
+            break
 
+        clean_name = strip_leading_emoji(topic_name) or topic_name
+        target = max(kw_count * 3, 10)
 
-# ═══════════════════════════════════════════════════
-#  마크다운 파싱 — 동적 카테고리 (커스텀 토픽 자동 지원)
-# ═══════════════════════════════════════════════════
-def parse_markdown(content: str) -> dict:
-    data: dict = {
-        "수집시각": "", "기준": "",
-        "검색어": [], "카테고리": {}, "베스트": [],
-    }
-    m = re.search(r'\*\*수집 시각:\*\*\s*(.+?)(?:\n|$)', content)
-    if m:
-        data["수집시각"] = m.group(1).strip()
-    m = re.search(r'\*\*기준:\*\*\s*(.+?)(?:\n|$)', content)
-    if m:
-        data["기준"] = m.group(1).strip()
+        if progress_callback:
+            progress_callback(idx, total, clean_name, "웹 검색 중...")
 
-    search_rows = re.findall(
-        r'\|\s*(\d+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|', content,
-    )
-    data["검색어"] = [
-        (r[0], r[1].strip(), r[2].strip())
-        for r in search_rows
-        if r[0].isdigit() and int(r[0]) <= 20
-    ][:10]
+        seen: set[str] = set()
+        items: list[dict] = []
 
-    sections = re.split(r'\n(?=## )', content)
-    skip_keywords = ("베스트", "급상승", "검색어", "📊")
-    for sec in sections:
-        m_head = re.match(r'## (.+?)(?:\n|$)', sec)
-        if not m_head:
-            continue
-        heading = m_head.group(1).strip()
-        if any(kw in heading for kw in skip_keywords):
-            continue
-        if "주요 회자된 주제 없음" in sec:
-            data["카테고리"][heading] = []
-            continue
-        topics = []
-        blocks = re.findall(
-            r'###\s*\d+\.\s*([^\n]+)\s*\n'
-            r'\*\*회자 배경:\*\*[^\n]*\n+'
-            r'\*\*의견 요약:\*\*\s*([^\n]+)'
-            r'(?:\s*\n+\*\*내용 이해용 참고\*\*\s*\n((?:-\s*[^\n]*\n?)*))?',
-            sec,
-        )
-        for block in blocks:
-            title, summary = block[0].strip(), block[1].strip()
-            ref_block = block[2] if len(block) > 2 else ""
-            refs = re.findall(r'-\s*\[([^\]]+)\]\s*([^\n]+)', ref_block or "")
-            urls = []
-            for label, ref_str in refs:
-                ref_str = (
-                    ref_str.strip().split("(")[0].strip()
-                    if "(" in ref_str
-                    else ref_str.strip()
-                )
-                if ref_str.startswith("http") or any(
-                    x in ref_str for x in (".com", ".co.kr", ".kr", ".net")
-                ):
-                    if not ref_str.startswith("http"):
-                        ref_str = "https://" + ref_str
-                    urls.append((label, ref_str))
-            topics.append({
-                "제목": title,
-                "의견요약": summary,
-                "참고url": urls[0][1] if urls else "",
-                "참고라벨": urls[0][0] if urls else "",
-            })
-        if topics:
-            data["카테고리"][heading] = topics
-
-    best_section = re.search(
-        r'## 📋 커뮤니티별 베스트[\s\S]*?\n\|[-\s|]+\|\n([\s\S]*?)(?=\n---|\n## |\Z)',
-        content,
-    )
-    if best_section:
-        rows = re.findall(
-            r'\|\s*\*\*([^*]+)\*\*\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|',
-            best_section.group(1),
-        )
-        data["베스트"] = [
-            (r[0].strip(), r[1].strip(), r[2].strip()) for r in rows
+        queries = [
+            f"{clean_name} 커뮤니티 핫이슈 인기",
+            f"{clean_name} 게시판 실시간 화제",
+            f"{clean_name} 최신 이슈 논란",
         ]
-    return data
+
+        for q in queries:
+            if len(items) >= target:
+                break
+            try:
+                for r in DDGS(timeout=20).text(
+                    q, max_results=min(target, 20), timelimit=timelimit,
+                ):
+                    title = (r.get("title") or "").strip()
+                    body = (r.get("body") or "").strip()
+                    href = (r.get("href") or "").strip()
+                    if not title or title.lower() in seen:
+                        continue
+                    seen.add(title.lower())
+                    items.append({
+                        "제목": title[:80],
+                        "의견요약": body[:300] if body else "",
+                        "참고url": href,
+                        "참고라벨": "",
+                    })
+            except Exception as e:
+                log.warning("텍스트 검색 실패 '%s': %s", q, e)
+
+        if progress_callback:
+            progress_callback(idx, total, clean_name, "뉴스 검색 중...")
+
+        try:
+            for r in DDGS(timeout=20).news(
+                clean_name, max_results=min(target, 15), timelimit=timelimit,
+            ):
+                title = (r.get("title") or "").strip()
+                body = (r.get("body") or "").strip()
+                url = (r.get("url") or "").strip()
+                if not title or title.lower() in seen:
+                    continue
+                seen.add(title.lower())
+                items.append({
+                    "제목": title[:80],
+                    "의견요약": body[:300] if body else "",
+                    "참고url": url,
+                    "참고라벨": r.get("source", ""),
+                })
+        except Exception as e:
+            log.warning("뉴스 검색 실패 '%s': %s", clean_name, e)
+
+        categories[topic_name] = items
+        log.info("토픽 '%s': %d건 수집 (목표 %d)", clean_name, len(items), kw_count)
+
+        if idx < total - 1:
+            time.sleep(0.5)
+
+    if progress_callback:
+        progress_callback(total, total, "완료", "검색 완료")
+
+    return {
+        "수집시각": datetime.now().strftime("%Y년 %m월 %d일 %H:%M"),
+        "기준": f"현재 시점 대비 {_timelimit_label(timelimit)} 이내",
+        "검색어": [],
+        "카테고리": categories,
+        "베스트": [],
+    }
 
 
 # ═══════════════════════════════════════════════════
@@ -339,12 +339,13 @@ def format_for_messenger(
         for name in DEFAULT_TOPICS:
             topic_config[name] = DEFAULT_KEYWORD_COUNT
 
+    n_topics = len(topic_config)
     lines.append("")
     lines.append("✦ 게시판 검색기")
     lines.append(f"  {date_str} · {now.strftime('%H:%M')} 기준")
     lines.append("")
-    lines.append(f"※ {site_count:,}개 사이트 · {board_count:,}개 게시판")
-    lines.append(f"  설정된 토픽 기준 · {hours}시간 회자 · 핫키워드 중요도 순")
+    lines.append(f"※ {n_topics}개 토픽 · {hours}시간 기준 · 실시간 웹 검색")
+    lines.append(f"  {site_count:,}개 사이트 · {board_count:,}개 게시판 DB 기반")
     lines.append("")
     lines.append("━" * LINE_WIDTH)
     lines.append("✨ 토픽별 핫키워드 (토픽당 설정 개수만큼)")

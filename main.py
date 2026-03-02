@@ -101,21 +101,47 @@ def get_site_board_counts_display():
 
 def run_report(progress_callback=None, settings=None, stop_event=None):
     try:
-        from report_engine import parse_markdown, format_for_messenger, iter_sites_progress
-        from common import MD_FILE
-        if not MD_FILE.exists():
-            return None, "파일을 찾을 수 없습니다.\n\n'커뮤니티_핫주제_실시간.md'가 필요합니다.", False
+        from report_engine import search_topics_online, format_for_messenger
+        from common import DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS, DEFAULT_TOPICS
+
         if settings is None:
             settings = get_settings()
-        iter_sites_progress(
+
+        topic_config: dict[str, int] = {}
+        all_t = settings.get("topics", []) + settings.get("custom_topics", [])
+        by_name: dict[str, int] = {}
+        for t in all_t:
+            if t.get("enabled", True):
+                by_name[t["name"]] = max(
+                    1, min(10, int(t.get("keyword_count", DEFAULT_KEYWORD_COUNT))),
+                )
+        topic_order = settings.get("topic_order") or []
+        if topic_order:
+            for name in topic_order:
+                if name in by_name:
+                    topic_config[name] = by_name.pop(name)
+        for name, kw in by_name.items():
+            topic_config[name] = kw
+        if not topic_config:
+            for name in DEFAULT_TOPICS:
+                topic_config[name] = DEFAULT_KEYWORD_COUNT
+
+        hours = settings.get("hours", DEFAULT_HOURS)
+
+        data = search_topics_online(
+            topic_config, hours,
             progress_callback=progress_callback,
             stop_event=stop_event,
         )
+
         if stop_event and stop_event.is_set():
             return None, "중지됨", False
-        content = MD_FILE.read_text(encoding="utf-8")
-        data = parse_markdown(content)
+
+        if not data.get("카테고리"):
+            return None, "검색 결과가 없습니다.\n\n인터넷 연결을 확인하거나\npip install duckduckgo-search 를 실행하세요.", False
+
         output, total = format_for_messenger(data, settings)
+
         clip_ok = False
         try:
             import pyperclip
@@ -255,7 +281,21 @@ def _open_settings_window(parent, on_settings_saved=None):
 
     def _refresh_right():
         ne = sum(1 for n in ordered_names if selected.get(n, True))
-        gs, gb = get_site_board_counts()
+        all_related: list = []
+        has_data = False
+        for n in ordered_names:
+            if not selected.get(n, True):
+                continue
+            t = _get_topic(n)
+            if t:
+                rs = t.get("related_sites") or []
+                if rs:
+                    has_data = True
+                    all_related.extend(rs)
+        if has_data:
+            gs, gb = count_unique_domains(all_related)
+        else:
+            gs, gb = get_site_board_counts()
         right_var.set(f"{ne}개 토픽 · {gs:,}개 사이트\n{gb:,}개 게시판")
 
     # ── 설정 저장 ──
@@ -663,11 +703,10 @@ def _open_settings_window(parent, on_settings_saved=None):
                 if not ww.winfo_exists():
                     return
                 ww.destroy()
-                sc = len(related) if related else 0
-                bc = sum(len(r.get("sites", [])) for r in related) if related else 0
+                sc, bc = count_unique_domains(related) if related else (0, 0)
                 if sc or bc:
                     msg = (
-                        f"총 {sc}개 카테고리(사이트), {bc}개 게시판이 검색되었습니다.\n"
+                        f"총 {sc:,}개 사이트, {bc:,}개 게시판이 검색되었습니다.\n"
                         "이 목록은 토픽별 핫키워드 검색 실행 시 참고하여 사용됩니다.\n\n등록할까요?"
                     )
                 else:
@@ -706,12 +745,13 @@ def _open_settings_window(parent, on_settings_saved=None):
         fg = C["sel_fg"] if is_on else C["tx"]
         fg2 = C["sel_fg"] if is_on else C["tx2"]
 
-        if ptc and name in ptc:
+        related = t.get("related_sites") or []
+        if related:
+            s_cnt, b_cnt = count_unique_domains(related)
+        elif ptc and name in ptc:
             s_cnt, b_cnt = ptc[name]
         else:
-            related = t.get("related_sites") or []
-            s_cnt = len(related)
-            b_cnt = sum(len(r.get("sites", [])) for r in related) if related else 0
+            s_cnt, b_cnt = 0, 0
 
         row = tk.Frame(inner, bg=bg, padx=10, pady=8, highlightbackground=C["bdr"], highlightthickness=1, cursor="hand2")
         row.pack(fill=tk.X, pady=2)
@@ -1142,14 +1182,14 @@ def main():
         progress_bar["value"] = 0
         root.update_idletasks()
 
-        def pcb(s, b, ts, tb, cat, site):
+        def pcb(current, total, topic_name, detail=""):
             if _stop_event.is_set():
                 return
-            pct = (b / tb * 100) if tb > 0 else 0
+            pct = (current / total * 100) if total > 0 else 0
 
             def _update():
-                count_var.set(f"사이트 {s:,} / 게시판 {b:,} 검색 중")
-                cur_var.set(f"{cat} > {site}")
+                count_var.set(f"토픽 {current + 1}/{total} 실시간 검색 중")
+                cur_var.set(f"🔍 {topic_name}  {detail}")
                 progress_bar["value"] = pct
             root.after(0, _update)
 

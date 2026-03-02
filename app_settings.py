@@ -128,7 +128,7 @@ def save_settings(settings: dict) -> bool:
 #  웹 검색으로 관련 사이트 탐색 (DuckDuckGo + timeout)
 # ═══════════════════════════════════════════════════
 def find_related_sites_via_web_search(
-    topic_name: str, max_results: int = 25,
+    topic_name: str, max_results: int = 100,
 ) -> list:
     key = (topic_name or "").strip()
     if not key:
@@ -139,12 +139,15 @@ def find_related_sites_via_web_search(
         from urllib.parse import urlparse
         from duckduckgo_search import DDGS
 
-        queries = [f"{key} 커뮤니티 사이트", f"{key} 게시판", f"{key} 포럼"]
+        queries = [
+            f"{key} 커뮤니티 사이트", f"{key} 게시판", f"{key} 포럼",
+            f"{key} 카페", f"{key} 블로그",
+        ]
         for q in queries:
             if len(sites) >= max_results:
                 break
             try:
-                for r in DDGS(timeout=15).text(q, max_results=15):
+                for r in DDGS(timeout=15).text(q, max_results=30):
                     href = (r.get("href") or r.get("url") or "").strip()
                     title = (r.get("title") or "").strip() or href
                     if not href or "javascript:" in href:
@@ -189,7 +192,7 @@ def find_related_sites_for_topic(topic_name: str) -> list:
                 "sites": [
                     {"name": s.get("name", ""), "url": s.get("url", "")}
                     for s in sites if isinstance(s, dict)
-                ][:50],
+                ],
             })
         else:
             matched = [
@@ -199,8 +202,8 @@ def find_related_sites_for_topic(topic_name: str) -> list:
                 and (key in (s.get("name") or "") or kl in (s.get("name") or "").lower())
             ]
             if matched:
-                result.append({"category": cname, "sites": matched[:30]})
-    return result[:10]
+                result.append({"category": cname, "sites": matched})
+    return result
 
 
 def get_related_sites_for_default_topic(display_name: str) -> list:
@@ -219,6 +222,6 @@ def get_related_sites_for_default_topic(display_name: str) -> list:
                     "sites": [
                         {"name": x.get("name", ""), "url": x.get("url", "")}
                         for x in sites if isinstance(x, dict)
-                    ][:100],
+                    ],
                 }]
     return []
