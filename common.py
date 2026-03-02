@@ -63,6 +63,8 @@ APP_VERSION = "임금님귀 v1.2"
 COPYRIGHT = "copyright by 챠리"
 EMAIL = "challychoi@me.com"
 UPDATE_WARN_DAYS = 30
+APP_REGION = "kr-kr"
+APP_FLAG = "🇰🇷"
 
 DEFAULT_TOPICS = [
     "🔧 IT 하드웨어", "💻 IT 소프트웨어", "🤖 IT AI", "🪙 코인",

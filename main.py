@@ -48,6 +48,7 @@ sys.path.insert(0, str(_BASE))
 
 from common import (
     BASE, APP_VERSION, COPYRIGHT, EMAIL, UPDATE_WARN_DAYS,
+    APP_REGION, APP_FLAG,
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
     log, date_seed, get_topic_icon, get_display_name,
     acquire_instance_lock,
@@ -130,6 +131,7 @@ def run_report(progress_callback=None, settings=None, stop_event=None):
 
         data = search_topics_online(
             topic_config, hours,
+            region=APP_REGION,
             progress_callback=progress_callback,
             stop_event=stop_event,
         )
@@ -982,6 +984,7 @@ def main():
     title_row.pack(anchor=tk.W)
     tk.Label(title_row, text="게시판 검색기", font=FT, fg=COLORS["text"], bg=COLORS["bg"]).pack(side=tk.LEFT)
     tk.Label(title_row, text=f"  {APP_VERSION}", font=("Segoe UI", 9), fg=COLORS["muted"], bg=COLORS["bg"]).pack(side=tk.LEFT, anchor=tk.S, pady=(0, 4))
+    tk.Label(title_row, text=f"  {APP_FLAG}", font=("Segoe UI Emoji", 14), fg=COLORS["text"], bg=COLORS["bg"]).pack(side=tk.LEFT, anchor=tk.S, pady=(0, 2))
 
     tk.Label(hl, text="토픽별 핫키워드 · 네티즌 의견 실시간 리포트", font=FS, fg=COLORS["muted"], bg=COLORS["bg"]).pack(anchor=tk.W, pady=(2, 0))
 

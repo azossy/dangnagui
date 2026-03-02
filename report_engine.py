@@ -172,6 +172,7 @@ def _timelimit_label(tl: str) -> str:
 def search_topics_online(
     topic_config: dict[str, int],
     hours: int = 36,
+    region: str = "kr-kr",
     progress_callback=None,
     stop_event=None,
 ) -> dict:
@@ -208,7 +209,8 @@ def search_topics_online(
                 break
             try:
                 for r in DDGS(timeout=20).text(
-                    q, max_results=target, timelimit=timelimit,
+                    q, max_results=target,
+                    timelimit=timelimit, region=region,
                 ):
                     title = (r.get("title") or "").strip()
                     body = (r.get("body") or "").strip()
@@ -230,7 +232,8 @@ def search_topics_online(
 
         try:
             for r in DDGS(timeout=20).news(
-                clean_name, max_results=target, timelimit=timelimit,
+                clean_name, max_results=target,
+                timelimit=timelimit, region=region,
             ):
                 title = (r.get("title") or "").strip()
                 body = (r.get("body") or "").strip()
