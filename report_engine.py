@@ -5,14 +5,13 @@ DuckDuckGo 기반 실시간 검색 → 토픽별 핫키워드 리포트 생성
 """
 from __future__ import annotations
 
-import re
 import time
 import random
 from urllib.parse import urlparse
 from datetime import datetime
 
 from common import (
-    SITES_CONFIG, MD_FILE,
+    SITES_CONFIG,
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
     load_json, log, strip_leading_emoji,
 )

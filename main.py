@@ -1,32 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-게시판 검색기 — 임금님귀 v0.9 베타
-Microsoft Fluent 스타일 · 상용 품질 · USB 포터블
+게시판 검색기 — 임금님귀 v1.2.1
+DuckDuckGo 실시간 검색 · Microsoft Fluent 스타일 · USB 포터블
 copyright by 챠리 (challychoi@me.com)
-
-수정 이력 — 상용화 최종 감사 반영
-  BUG-1  경합 조건 → _generation_id 세대 카운터
-  BUG-2  커스텀 토픽 미반영 → 동적 파싱 (report_engine)
-  BUG-3  날짜 색상 → hashlib 고정 시드
-  BUG-4  사이트 수 오계산 → count_unique_domains
-  BUG-5  MouseWheel 전역 해제 → 활성 플래그 방식
-  BUG-6  _MEIPASS 안전 → common.py 통합
-  PI-1   스레드 안전 → _settings_lock
-  PI-2   원자적 쓰기 → common.atomic_write
-  PI-5   복사 플레이스홀더 → PLACEHOLDER 체크
-  PI-8   root.update 재진입 → update_idletasks
-  UX-1   프로그레스 바 추가
-  UX-2   미저장 변경 확인
-  UX-3   사이트 갱신 후 자동 저장
-  UX-4   오류 토스트 4초
-  UX-5   첫 실행 인라인 배너
-  UX-6   단축키 힌트
-  UX-7   소셜 공유 예외 확대
-  MF-1   로깅 (common.log)
-  MF-2   설정 .bak 백업
-  MF-3   단일 인스턴스
-  MF-7   의존성 안내
 """
 from __future__ import annotations
 
@@ -103,7 +80,6 @@ def get_site_board_counts_display():
 def run_report(progress_callback=None, settings=None, stop_event=None):
     try:
         from report_engine import search_topics_online, format_for_messenger
-        from common import DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS, DEFAULT_TOPICS
 
         if settings is None:
             settings = get_settings()

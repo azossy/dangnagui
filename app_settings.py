@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""게시판 검색기 — 설정 관리 모듈 (상용 v0.9)
+"""게시판 검색기 — 설정 관리 모듈
 원자적 쓰기 + .bak 백업 + 스레드 안전 + 중복 토픽 방지
 """
 from __future__ import annotations

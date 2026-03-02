@@ -1,6 +1,6 @@
 #define MyAppName "dangnagui"
 #define MyAppDisplayName "dangnagui"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.2.1"
 #define MyAppPublisher "Chally"
 #define MyAppURL "mailto:challychoi@me.com"
 #define MyAppExeName "dangnagui.exe"
@@ -16,7 +16,7 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppDisplayName}
 OutputDir=Output
-OutputBaseFilename=dangnagui-setup-v1.2
+OutputBaseFilename=dangnagui-setup-v1.2.1
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

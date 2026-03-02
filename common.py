@@ -59,7 +59,7 @@ log = setup_logger()
 # ═══════════════════════════════════════════════════
 #  상수
 # ═══════════════════════════════════════════════════
-APP_VERSION = "임금님귀 v1.2"
+APP_VERSION = "임금님귀 v1.2.1"
 COPYRIGHT = "copyright by 챠리"
 EMAIL = "challychoi@me.com"
 UPDATE_WARN_DAYS = 30
@@ -75,7 +75,6 @@ DEFAULT_HOURS = 36
 
 SETTINGS_FILE = BASE / "app_settings.json"
 SITES_CONFIG = BASE / "sites_config.json"
-MD_FILE = BASE / "커뮤니티_핫주제_실시간.md"
 
 
 # ═══════════════════════════════════════════════════
