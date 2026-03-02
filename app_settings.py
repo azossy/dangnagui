@@ -10,6 +10,7 @@ import threading
 from common import (
     SETTINGS_FILE, SITES_CONFIG,
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
+    DEFAULT_REPORT_HEADER,
     atomic_write, load_json, log, strip_leading_emoji,
 )
 
@@ -30,6 +31,7 @@ def get_default_settings() -> dict:
         "topic_order": [],
         "last_track_date": "",
         "valid_rate": -1,
+        "report_header": DEFAULT_REPORT_HEADER,
     }
 
 
@@ -71,6 +73,7 @@ def _normalize_settings(data: dict) -> dict:
         "topic_order": list(data.get("topic_order") or []),
         "last_track_date": str(data.get("last_track_date") or ""),
         "valid_rate": vr,
+        "report_header": str(data.get("report_header") or DEFAULT_REPORT_HEADER),
     }
 
 

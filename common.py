@@ -59,7 +59,7 @@ log = setup_logger()
 # ═══════════════════════════════════════════════════
 #  상수
 # ═══════════════════════════════════════════════════
-APP_VERSION = "임금님귀 v1.2.3"
+APP_VERSION = "임금님귀 v1.2.4"
 COPYRIGHT = "copyright by 챠리"
 EMAIL = "challychoi@me.com"
 UPDATE_WARN_DAYS = 30
@@ -72,6 +72,11 @@ DEFAULT_TOPICS = [
 ]
 DEFAULT_KEYWORD_COUNT = 3
 DEFAULT_HOURS = 36
+DEFAULT_REPORT_HEADER = (
+    "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    "✨ 토픽별 핫키워드 (토픽당 설정 개수만큼)\n"
+    "━━━━━━━━━━━━━━━━━━━━━━━━"
+)
 
 SETTINGS_FILE = BASE / "app_settings.json"
 SITES_CONFIG = BASE / "sites_config.json"

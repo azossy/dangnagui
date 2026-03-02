@@ -5,6 +5,7 @@ DuckDuckGo 기반 실시간 검색 → 토픽별 핫키워드 리포트 생성
 """
 from __future__ import annotations
 
+import re
 import time
 import random
 from urllib.parse import urlparse
@@ -13,6 +14,7 @@ from datetime import datetime
 from common import (
     SITES_CONFIG,
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
+    DEFAULT_REPORT_HEADER,
     load_json, log, strip_leading_emoji,
 )
 
@@ -35,6 +37,53 @@ EMPTY_CAT_FALLBACK = {
         ("식품안전·영양", "식약처·유통이슈"),
     ],
 }
+
+
+# ═══════════════════════════════════════════════════
+#  언어 감지 — 한국어/영어만 허용, 중국어·일본어 등 배제
+# ═══════════════════════════════════════════════════
+_RE_HANGUL = re.compile(r'[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\uFFA0-\uFFDC]')
+_RE_CJK = re.compile(r'[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]')
+_RE_JPONLY = re.compile(r'[\u3040-\u309F\u30A0-\u30FF\u31F0-\u31FF]')
+_RE_LATIN = re.compile(r'[a-zA-Z]')
+
+
+def _is_acceptable_lang(text: str) -> bool:
+    """한국어 또는 영어가 주를 이루면 True, 중국어·일본어 등이면 False."""
+    if not text:
+        return False
+    ko = len(_RE_HANGUL.findall(text))
+    cjk = len(_RE_CJK.findall(text))
+    jp = len(_RE_JPONLY.findall(text))
+    en = len(_RE_LATIN.findall(text))
+
+    other = cjk + jp
+    if other == 0:
+        return True
+    if ko == 0 and en == 0 and other > 2:
+        return False
+    if ko > 0:
+        return ko >= other * 0.5
+    return en >= other
+
+
+def _has_korean(text: str) -> bool:
+    return bool(_RE_HANGUL.search(text)) if text else False
+
+
+def _try_translate_text(text: str) -> str:
+    """DuckDuckGo 번역 API로 영문 텍스트를 한국어로 번역 시도."""
+    if not text or not _HAS_DDGS:
+        return text
+    if _has_korean(text):
+        return text
+    try:
+        result = DDGS(timeout=10).translate(text[:500], to="ko")
+        if result and isinstance(result, list) and result[0].get("translated"):
+            return result[0]["translated"]
+    except Exception as e:
+        log.debug("Translation failed: %s", e)
+    return text
 
 
 # ═══════════════════════════════════════════════════
@@ -167,6 +216,7 @@ def _timelimit_label(tl: str) -> str:
 
 # ═══════════════════════════════════════════════════
 #  실시간 웹 검색 — DuckDuckGo text + news
+#  한국어/영어만 수집, 타국어 배제, 부족 시 영문 번역
 # ═══════════════════════════════════════════════════
 def search_topics_online(
     topic_config: dict[str, int],
@@ -195,7 +245,7 @@ def search_topics_online(
             progress_callback(idx, total, clean_name, "웹 검색 중...")
 
         seen: set[str] = set()
-        items: list[dict] = []
+        raw_items: list[dict] = []
 
         queries = [
             f"{clean_name} 커뮤니티 핫이슈 인기",
@@ -204,7 +254,7 @@ def search_topics_online(
         ]
 
         for q in queries:
-            if len(items) >= target:
+            if len(raw_items) >= target:
                 break
             try:
                 for r in DDGS(timeout=20).text(
@@ -217,7 +267,7 @@ def search_topics_online(
                     if not title or title.lower() in seen:
                         continue
                     seen.add(title.lower())
-                    items.append({
+                    raw_items.append({
                         "제목": title[:80],
                         "의견요약": body[:300] if body else "",
                         "참고url": href,
@@ -240,7 +290,7 @@ def search_topics_online(
                 if not title or title.lower() in seen:
                     continue
                 seen.add(title.lower())
-                items.append({
+                raw_items.append({
                     "제목": title[:80],
                     "의견요약": body[:300] if body else "",
                     "참고url": url,
@@ -248,6 +298,36 @@ def search_topics_online(
                 })
         except Exception as e:
             log.warning("뉴스 검색 실패 '%s': %s", clean_name, e)
+
+        # --- 언어 필터: 한국어/영어만, 중국어·일본어 배제 ---
+        items = [
+            i for i in raw_items
+            if _is_acceptable_lang(i["제목"] + " " + i["의견요약"])
+        ]
+        filtered_out = len(raw_items) - len(items)
+        if filtered_out:
+            log.info("토픽 '%s': %d건 타국어 필터링", clean_name, filtered_out)
+
+        # --- 한국어 결과 부족 시 영문 항목 번역 ---
+        ko_items = [i for i in items if _has_korean(i["제목"])]
+        en_items = [i for i in items if not _has_korean(i["제목"])]
+
+        if len(ko_items) < kw_count and en_items:
+            if progress_callback:
+                progress_callback(idx, total, clean_name, "영문 결과 번역 중...")
+            need = kw_count - len(ko_items)
+            for ei in en_items[:need]:
+                tr_title = _try_translate_text(ei["제목"])
+                tr_body = _try_translate_text(ei["의견요약"][:200])
+                ko_items.append({
+                    "제목": tr_title,
+                    "의견요약": tr_body,
+                    "참고url": ei["참고url"],
+                    "참고라벨": (ei.get("참고라벨") or "") + (" (번역)" if tr_title != ei["제목"] else ""),
+                })
+            items = ko_items + [i for i in en_items[need:]]
+        else:
+            items = ko_items + en_items
 
         categories[topic_name] = items
         log.info("토픽 '%s': %d건 수집 (목표 %d)", clean_name, len(items), kw_count)
@@ -310,7 +390,7 @@ def _wrap(text: str, indent: str = "", width: int = LINE_WIDTH) -> list:
 
 
 # ═══════════════════════════════════════════════════
-#  메신저용 리포트 포맷
+#  메신저용 리포트 포맷 — 신문기사/보도자료 스타일
 # ═══════════════════════════════════════════════════
 def format_for_messenger(
     data: dict, settings: dict | None = None,
@@ -347,11 +427,21 @@ def format_for_messenger(
     lines.append(f"  {date_str} · {now.strftime('%H:%M')} 기준")
     lines.append("")
     lines.append(f"※ {n_topics}개 토픽 · {hours}시간 기준 · 실시간 웹 검색")
-    lines.append(f"  {site_count:,}개 사이트 · {board_count:,}개 게시판 DB 기반")
+    if site_count or board_count:
+        lines.append(f"  {site_count:,}개 사이트 · {board_count:,}개 게시판 DB 기반")
     lines.append("")
-    lines.append("━" * LINE_WIDTH)
-    lines.append("✨ 토픽별 핫키워드 (토픽당 설정 개수만큼)")
-    lines.append("━" * LINE_WIDTH)
+
+    # --- 사용자 정의 헤더 또는 기본 헤더 ---
+    custom_header = ""
+    if settings:
+        custom_header = (settings.get("report_header") or "").strip()
+    if custom_header:
+        for hl in custom_header.split("\n"):
+            lines.append(hl)
+    else:
+        lines.append("━" * LINE_WIDTH)
+        lines.append("✨ 토픽별 핫키워드 (토픽당 설정 개수만큼)")
+        lines.append("━" * LINE_WIDTH)
 
     categories = data.get("카테고리", {})
     for cat_name, kw_count in topic_config.items():
@@ -370,10 +460,18 @@ def format_for_messenger(
             else:
                 lines.append("  · 해당 기간 회자 핫키워드 없음")
             continue
+
         for t in topics[:kw_count]:
-            lines.append(f"  · {t['제목']}")
-            for ln in _wrap(t["의견요약"], width=SUMMARY_WIDTH):
-                lines.append(f"    {ln}")
+            title = t["제목"]
+            source = t.get("참고라벨", "")
+            if source:
+                lines.append(f"  · {title} — {source}")
+            else:
+                lines.append(f"  · {title}")
+            summary = t["의견요약"]
+            if summary:
+                for ln in _wrap(summary, width=SUMMARY_WIDTH):
+                    lines.append(f"    {ln}")
             lines.append("")
 
     lines.append("")

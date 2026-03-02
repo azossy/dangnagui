@@ -1,6 +1,6 @@
 #define MyAppName "dangnagui"
 #define MyAppDisplayName "당나귀 게시판검색기"
-#define MyAppVersion "1.2.3"
+#define MyAppVersion "1.2.4"
 #define MyAppPublisher "Chally"
 #define MyAppURL "mailto:challychoi@me.com"
 #define MyAppExeName "dangnagui.exe"
@@ -16,7 +16,7 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppDisplayName}
 OutputDir=Output
-OutputBaseFilename=dangnagui-setup-v1.2.3
+OutputBaseFilename=dangnagui-setup-v1.2.4
 SetupIconFile=dangnagui.ico
 UninstallDisplayIcon={app}\dangnagui.ico
 Compression=lzma2/ultra64

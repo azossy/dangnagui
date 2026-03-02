@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-게시판 검색기 — 임금님귀 v1.2.3
+게시판 검색기 — 임금님귀 v1.2.4
 DuckDuckGo 실시간 검색 · Microsoft Fluent 스타일 · USB 포터블
 copyright by 챠리 (challychoi@me.com)
 """
@@ -27,6 +27,7 @@ from common import (
     BASE, APP_VERSION, COPYRIGHT, EMAIL, UPDATE_WARN_DAYS,
     APP_REGION, APP_FLAG,
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
+    DEFAULT_REPORT_HEADER,
     log, date_seed, get_topic_icon, get_display_name,
     acquire_instance_lock,
 )
@@ -277,12 +278,20 @@ def _open_settings_window(parent, on_settings_saved=None):
         right_var.set(f"{ne}개 토픽 · {gs:,}개 사이트\n{gb:,}개 게시판")
 
     # ── 설정 저장 ──
+    def _sync_header_to_settings():
+        try:
+            hdr_text = header_text.get("1.0", "end-1c").strip()
+            settings["report_header"] = hdr_text if hdr_text else DEFAULT_REPORT_HEADER
+        except Exception:
+            pass
+
     def do_save(*_):
         try:
             settings["hours"] = max(30, min(100, int(hours_var.get())))
         except (ValueError, TypeError):
             settings["hours"] = DEFAULT_HOURS
         _sync_spin_to_settings()
+        _sync_header_to_settings()
         for t in settings["topics"] + settings["custom_topics"]:
             n = t.get("name")
             if n:
@@ -313,6 +322,7 @@ def _open_settings_window(parent, on_settings_saved=None):
                 except (ValueError, TypeError):
                     settings["hours"] = DEFAULT_HOURS
                 _sync_spin_to_settings()
+                _sync_header_to_settings()
                 for t in settings["topics"] + settings["custom_topics"]:
                     n = t.get("name")
                     if n:
@@ -631,6 +641,38 @@ def _open_settings_window(parent, on_settings_saved=None):
     tk.Button(r1, text="▶", font=("Segoe UI", 9), fg=C["tx2"], bg=C["sf"], activeforeground=C["ac"], relief=tk.FLAT, cursor="hand2", command=lambda: _h_adj(1), padx=6, pady=2).pack(side=tk.LEFT)
     tk.Label(r1, text="시간 전", font=F["body"], fg=C["tx2"], bg=C["sf"]).pack(side=tk.LEFT, padx=(4, 0))
     tk.Label(s1, text="현재 시간 기준, 설정 시간 이전까지의 게시판 글 대상 (30~100)", font=F["xs"], fg=C["tx3"], bg=C["sf"]).pack(anchor=tk.W, pady=(4, 0))
+
+    # ── 섹션 1.5: 리포트 헤더 편집 ──
+    s15 = tk.Frame(sf, bg=C["sf"], padx=16, pady=10)
+    s15.pack(fill=tk.X, padx=pd, pady=(0, 6))
+    tk.Label(s15, text="리포트 헤더 편집", font=F["h2"], fg=C["tx"], bg=C["sf"]).pack(anchor=tk.W)
+    tk.Label(s15, text="리포트 상단에 표시되는 헤더를 자유롭게 편집할 수 있습니다", font=F["xs"], fg=C["tx2"], bg=C["sf"]).pack(anchor=tk.W, pady=(2, 6))
+    header_text = tk.Text(
+        s15, font=("Consolas", 10), bg=C["inp"], fg=C["tx"],
+        insertbackground=C["tx"], relief=tk.FLAT, height=3, wrap=tk.NONE,
+        padx=8, pady=6,
+    )
+    header_text.pack(fill=tk.X, ipady=2)
+    _saved_header = settings.get("report_header") or DEFAULT_REPORT_HEADER
+    header_text.insert("1.0", _saved_header)
+    header_text.bind("<Key>", lambda e: _mark_dirty())
+    hdr_hint = tk.Frame(s15, bg=C["sf"])
+    hdr_hint.pack(fill=tk.X, pady=(4, 0))
+    tk.Label(hdr_hint, text="기본값으로 되돌리려면:", font=F["xs"], fg=C["tx3"], bg=C["sf"]).pack(side=tk.LEFT)
+
+    def _reset_header():
+        header_text.delete("1.0", tk.END)
+        header_text.insert("1.0", DEFAULT_REPORT_HEADER)
+        _mark_dirty()
+
+    rst_btn = tk.Button(
+        hdr_hint, text="초기화", font=F["xs"], fg=C["ac"], bg=C["sf"],
+        activeforeground=C["ac_h"], relief=tk.FLAT, cursor="hand2",
+        command=_reset_header, padx=4,
+    )
+    rst_btn.pack(side=tk.LEFT, padx=(4, 0))
+    rst_btn.bind("<Enter>", lambda e: rst_btn.config(fg=C["ac_h"]))
+    rst_btn.bind("<Leave>", lambda e: rst_btn.config(fg=C["ac"]))
 
     # ── 섹션 2: 토픽 추가 ──
     s2 = tk.Frame(sf, bg=C["sf"], padx=16, pady=10, highlightbackground=C["bdr_a"], highlightthickness=1)
