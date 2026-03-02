@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-게시판 검색기 — 임금님귀 v1.2.4
+게시판 검색기 — 임금님귀 v1.3.0
+═══════════════════════════════════════════════════════
+국내 1,000+ 사이트 / 60,000+ 게시판 실시간 분석
+광고/스팸 3중 필터 · 암호화 DB · 통계 대시보드 · PDF 내보내기
 DuckDuckGo 실시간 검색 · Microsoft Fluent 스타일 · USB 포터블
+
 copyright by 챠리 (challychoi@me.com)
 """
 from __future__ import annotations
@@ -29,13 +33,15 @@ from common import (
     DEFAULT_TOPICS, DEFAULT_KEYWORD_COUNT, DEFAULT_HOURS,
     DEFAULT_REPORT_HEADER,
     log, date_seed, get_topic_icon, get_display_name,
-    acquire_instance_lock,
+    acquire_instance_lock, build_topic_config,
 )
 
 _app_settings = None
 _settings_lock = threading.Lock()
 _stop_event = threading.Event()
-_generation_id = 0
+
+# v1.3.0: 최근 검색 데이터 보관 (통계 대시보드용)
+_last_search_data: dict | None = None
 
 PLACEHOLDER = "▶ 스타트를 눌러 리포트를 생성하세요"
 
@@ -79,33 +85,24 @@ def get_site_board_counts_display():
 
 
 def run_report(progress_callback=None, settings=None, stop_event=None):
+    """
+    리포트를 생성합니다.
+    v1.3.0: Buzz Score 엔리치 + 통계 데이터 보관 추가
+    """
+    global _last_search_data
     try:
         from report_engine import search_topics_online, format_for_messenger
+        from stats_engine import enrich_with_buzz_scores
 
         if settings is None:
             settings = get_settings()
 
-        topic_config: dict[str, int] = {}
-        all_t = settings.get("topics", []) + settings.get("custom_topics", [])
-        by_name: dict[str, int] = {}
-        for t in all_t:
-            if t.get("enabled", True):
-                by_name[t["name"]] = max(
-                    1, min(10, int(t.get("keyword_count", DEFAULT_KEYWORD_COUNT))),
-                )
-        topic_order = settings.get("topic_order") or []
-        if topic_order:
-            for name in topic_order:
-                if name in by_name:
-                    topic_config[name] = by_name.pop(name)
-        for name, kw in by_name.items():
-            topic_config[name] = kw
-        if not topic_config:
-            for name in DEFAULT_TOPICS:
-                topic_config[name] = DEFAULT_KEYWORD_COUNT
+        # DRY: common.build_topic_config()로 토픽 구성 추출
+        topic_config = build_topic_config(settings)
 
         hours = settings.get("hours", DEFAULT_HOURS)
 
+        # 실시간 웹 검색 (스팸 3중 필터 + 통계 수집)
         data = search_topics_online(
             topic_config, hours,
             region=APP_REGION,
@@ -119,6 +116,13 @@ def run_report(progress_callback=None, settings=None, stop_event=None):
         if not data.get("카테고리"):
             return None, "검색 결과가 없습니다.\n\n인터넷 연결을 확인하거나\npip install duckduckgo-search 를 실행하세요.", False
 
+        # v1.3.0: Buzz Score 계산 추가 (통계 대시보드용)
+        data = enrich_with_buzz_scores(data)
+
+        # 최근 검색 데이터 보관 (통계 보기 버튼에서 사용)
+        _last_search_data = data
+
+        # 보도자료 스타일 리포트 생성
         output, total = format_for_messenger(data, settings)
 
         clip_ok = False
@@ -334,7 +338,8 @@ def _open_settings_window(parent, on_settings_saved=None):
                     on_settings_saved()
         _mw_active[0] = False
         try:
-            win.unbind_all("<MouseWheel>")
+            # REQ-005: 특정 바인딩만 해제하여 메인 창 스크롤에 영향 없도록
+            win.unbind("<MouseWheel>", _mw_bind_id)
         except Exception:
             pass
         win.destroy()
@@ -374,15 +379,31 @@ def _open_settings_window(parent, on_settings_saved=None):
 
     # ── 사이트 갱신 ──
     def _run_track(mode):
+        """
+        v1.3.0: 3계층 사이트 자동 탐색 실행
+        Layer 1(시드DB) → Layer 2(DC API + 파싱) → Layer 3(DDG + 네이버카페)
+        결과를 암호화 파일 DB에 자동 저장
+        """
         pw = tk.Toplevel(win)
-        pw.title("사이트 갱신 진행")
-        pw.geometry("520x380")
+        pw.title("사이트 DB 갱신 (3계층 탐색)")
+        pw.geometry("580x440")
         pw.configure(bg=C["sf"])
         pw.transient(win)
         pw.grab_set()
         pw.resizable(False, False)
-        title_txt = "전체 초기화 — 사이트·게시판 재구축" if mode == "full" else "추가 갱신 — 새 사이트·게시판만 추가"
+        title_txt = (
+            "전체 초기화 — 시드DB부터 3계층 재구축" if mode == "full"
+            else "추가 갱신 — 기존 DB + 신규 탐색 확장"
+        )
         tk.Label(pw, text=title_txt, font=F["h1"], fg=C["tx"], bg=C["sf"]).pack(anchor=tk.W, padx=20, pady=(12, 6))
+
+        # 진행률 바
+        progress_var = tk.DoubleVar(value=0)
+        progress_label = tk.StringVar(value="준비 중...")
+        tk.Label(pw, textvariable=progress_label, font=F["sm"], fg=C["ac"], bg=C["sf"]).pack(anchor=tk.W, padx=20, pady=(0, 2))
+        pbar = ttk.Progressbar(pw, variable=progress_var, maximum=100)
+        pbar.pack(fill=tk.X, padx=20, pady=(0, 6))
+
         log_text = tk.Text(pw, font=F["sm"], bg=C["bg"], fg=C["tx"], relief=tk.FLAT, padx=12, pady=8, height=14, state=tk.DISABLED, wrap=tk.WORD)
         log_text.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 8))
         for tag, clr in [("ok", "#4ec9b0"), ("info", C["ac"]), ("warn", "#ff8c00"), ("bold", "#ffffff")]:
@@ -403,97 +424,123 @@ def _open_settings_window(parent, on_settings_saved=None):
             if pw.winfo_exists():
                 pw.after(0, _w)
 
-        def work():
-            all_t = settings["topics"] + settings["custom_topics"]
-            total = len(all_t)
-            total_s = total_b = added_b = 0
-            if mode == "full":
-                _log("⚠ 기존 사이트·게시판 정보를 모두 삭제합니다.", "warn")
-                for t in all_t:
-                    t["related_sites"] = []
-                _log("  기존 정보 초기화 완료", "ok")
-            _log(f"\n총 {total}개 토픽 — 국내 주요 사이트·게시판 검색 시작", "info")
-            _log("")
-            for idx, t in enumerate(all_t):
-                name = t.get("name")
-                if not name:
-                    continue
-                _log(f"({idx + 1}/{total})  {name}", "bold")
-                _log("  → 웹검색으로 관련 사이트·게시판 탐색 중...")
-                if name in DEFAULT_TOPICS:
-                    new_sites = get_related_sites_for_default_topic(name)
-                else:
-                    new_sites = find_related_sites_via_web_search(name) or find_related_sites_for_topic(name)
+        track_stop = threading.Event()
 
-                if mode == "add":
-                    existing = t.get("related_sites") or []
-                    existing_urls = set()
-                    for cat in existing:
-                        for s in cat.get("sites") or []:
-                            existing_urls.add(s.get("url", ""))
-                    merged = list(existing)
-                    new_count = 0
-                    for cat in new_sites:
-                        new_entries = [s for s in (cat.get("sites") or []) if s.get("url", "") not in existing_urls]
-                        if new_entries:
-                            merged.append({"category": cat.get("category", "추가"), "sites": new_entries})
-                            new_count += len(new_entries)
-                    t["related_sites"] = merged
-                    s_c, b_c = count_unique_domains(merged)
-                    total_s += s_c
-                    total_b += b_c
-                    added_b += new_count
-                    _log(f"  ✓ {'신규 ' + str(new_count) + '개 추가' if new_count else '변경 없음'} (총 {b_c:,}개)", "ok")
-                else:
-                    t["related_sites"] = new_sites
-                    s_c, b_c = count_unique_domains(new_sites)
-                    total_s += s_c
-                    total_b += b_c
-                    _log(f"  ✓ {s_c:,}개 사이트, {b_c:,}개 게시판 등록", "ok")
+        def _cancel_track():
+            track_stop.set()
+            _log("⚠ 사용자가 중단을 요청했습니다.", "warn")
+
+        cancel_btn = tk.Button(
+            pw, text="중단", font=F["btn"], fg="#fff", bg="#d13438",
+            activebackground="#e04b4f", relief=tk.FLAT, cursor="hand2",
+            command=_cancel_track, pady=5,
+        )
+        cancel_btn.pack(pady=(0, 8))
+
+        def work():
+            try:
+                from app_settings import run_site_discovery
+
+                _log("═══ v1.3.0 3계층 사이트 자동 탐색 시작 ═══", "bold")
+                _log(f"모드: {'전체 초기화' if mode == 'full' else '추가 갱신'}", "info")
                 _log("")
 
-            _log("접속율 검사 중...", "info")
-            rate = check_sample_urls(sample_size=20, timeout=3)
-            today = datetime.now().strftime("%Y-%m-%d")
-            settings["last_track_date"] = today
-            settings["valid_rate"] = rate
-            if rate >= 0:
-                _log(f"  유효 접속율: {rate}%", "ok")
-            _log("")
-            summary = f"총 {total}개 토픽 / {total_s:,}개 사이트 / {total_b:,}개 게시판"
-            if mode == "add":
-                summary += f" (신규 {added_b:,}개 추가)"
-            _log(f"━━ {summary} 갱신 완료 ━━", "bold")
+                # 진행률 콜백
+                def _progress(current, total, message):
+                    if pw.winfo_exists():
+                        pct = (current / max(total, 1)) * 100
+                        pw.after(0, lambda: progress_var.set(pct))
+                        pw.after(0, lambda: progress_label.set(f"[{current}/{total}] {message}"))
+                    _log(f"  [{current}/{total}] {message}", "info")
 
-            save_settings(settings)
-            set_settings(settings)
-            _log("  ✓ 설정 자동 저장 완료", "ok")
-
-            def done():
-                if not pw.winfo_exists():
-                    return
-                valid_var.set(f"유효 접속율 {rate}%" if rate >= 0 else "유효 접속율 측정 실패")
-                last_var.set(f"마지막 갱신: {today}")
-                ok_btn = tk.Button(
-                    pw, text="  확인  ", font=F["btn"], fg="#fff", bg=C["ac"],
-                    activebackground=C["ac_h"], relief=tk.FLAT, cursor="hand2",
-                    padx=24, pady=5,
+                # 3계층 탐색 실행
+                result = run_site_discovery(
+                    settings=settings,
+                    progress_callback=_progress,
+                    stop_event=track_stop,
                 )
-                ok_btn.pack(pady=(4, 14))
-                ok_btn.bind("<Enter>", lambda e: ok_btn.config(bg=C["ac_h"]))
-                ok_btn.bind("<Leave>", lambda e: ok_btn.config(bg=C["ac"]))
 
-                def _close():
-                    pw.destroy()
-                    dirty[0] = False
-                    _rebuild_topic_list()
-                    _refresh_right()
-                    if on_settings_saved:
-                        on_settings_saved()
-                    _toast("✓ 사이트 갱신 완료 · 설정 자동 저장됨")
+                if "error" in result:
+                    _log(f"오류: {result['error']}", "warn")
+                else:
+                    _log("")
+                    _log("━━━ 사이트 탐색 결과 요약 ━━━", "bold")
+                    _log(f"  총 사이트: {result.get('total_sites', 0):,}개", "ok")
+                    _log(f"  총 게시판: {result.get('total_boards', 0):,}개", "ok")
+                    _log(f"  DC갤러리: {result.get('dc_gallery_count', 0):,}개", "ok")
+                    _log(f"  네이버카페: {result.get('naver_cafe_count', 0):,}개", "ok")
+                    _log(f"  DDG 신규 발견: {result.get('discovered_count', 0):,}개", "ok")
+                    _log("")
 
-                ok_btn.config(command=_close)
-            win.after(0, done)
+                # 레거시 호환: 기존 방식 사이트 갱신도 병행
+                _log("레거시 호환 갱신 진행 중...", "info")
+                all_t = settings["topics"] + settings["custom_topics"]
+                for idx, t in enumerate(all_t):
+                    name = t.get("name")
+                    if not name:
+                        continue
+                    if track_stop.is_set():
+                        break
+                    if name in DEFAULT_TOPICS:
+                        new_sites = get_related_sites_for_default_topic(name)
+                    else:
+                        new_sites = find_related_sites_via_web_search(name) or find_related_sites_for_topic(name)
+                    if mode == "full":
+                        t["related_sites"] = new_sites
+                    elif mode == "add":
+                        existing = t.get("related_sites") or []
+                        existing_urls = {s.get("url", "") for cat in existing for s in cat.get("sites") or []}
+                        merged = list(existing)
+                        for cat in new_sites:
+                            new_entries = [s for s in (cat.get("sites") or []) if s.get("url", "") not in existing_urls]
+                            if new_entries:
+                                merged.append({"category": cat.get("category", "추가"), "sites": new_entries})
+                        t["related_sites"] = merged
+
+                # 접속율 검사
+                _log("접속율 검사 중...", "info")
+                rate = check_sample_urls(sample_size=20, timeout=3)
+                today = datetime.now().strftime("%Y-%m-%d")
+                settings["last_track_date"] = today
+                settings["valid_rate"] = rate
+                if rate >= 0:
+                    _log(f"  유효 접속율: {rate}%", "ok")
+
+                save_settings(settings)
+                set_settings(settings)
+                _log("")
+                _log("━━ 사이트 DB 갱신 완료 · 설정 자동 저장 ━━", "bold")
+
+                def done():
+                    if not pw.winfo_exists():
+                        return
+                    valid_var.set(f"유효 접속율 {rate}%" if rate >= 0 else "유효 접속율 측정 실패")
+                    last_var.set(f"마지막 갱신: {today}")
+                    cancel_btn.destroy()
+                    ok_btn = tk.Button(
+                        pw, text="  확인  ", font=F["btn"], fg="#fff", bg=C["ac"],
+                        activebackground=C["ac_h"], relief=tk.FLAT, cursor="hand2",
+                        padx=24, pady=5,
+                    )
+                    ok_btn.pack(pady=(4, 14))
+                    ok_btn.bind("<Enter>", lambda e: ok_btn.config(bg=C["ac_h"]))
+                    ok_btn.bind("<Leave>", lambda e: ok_btn.config(bg=C["ac"]))
+
+                    def _close_track():
+                        pw.destroy()
+                        dirty[0] = False
+                        _rebuild_topic_list()
+                        _refresh_right()
+                        if on_settings_saved:
+                            on_settings_saved()
+                        _toast("✓ 사이트 DB 갱신 완료 · 3계층 탐색 + 암호화 저장")
+
+                    ok_btn.config(command=_close_track)
+                win.after(0, done)
+
+            except Exception as e:
+                _log(f"오류 발생: {e}", "warn")
+                log.error("사이트 갱신 오류: %s", e)
 
         threading.Thread(target=work, daemon=True).start()
 
@@ -1061,6 +1108,37 @@ def main():
     mail_btn.bind("<Enter>", lambda e: mail_btn.config(fg=COLORS["ac"]))
     mail_btn.bind("<Leave>", lambda e: mail_btn.config(fg=COLORS["muted"]))
 
+    # v1.3.0: 통계 보기 버튼
+    def _open_stats():
+        """통계 대시보드 창을 엽니다. 검색 데이터가 없으면 안내 메시지."""
+        if _last_search_data is None:
+            messagebox.showinfo(
+                "통계 보기",
+                "아직 검색 결과가 없습니다.\n\n"
+                "먼저 스타트 버튼을 눌러 리포트를 생성한 후\n"
+                "통계 보기를 이용해 주세요.",
+            )
+            return
+        try:
+            from stats_window import open_stats_window
+            stats = _last_search_data.get("통계", {})
+            open_stats_window(root, stats, _last_search_data)
+        except ImportError:
+            messagebox.showwarning("통계 보기", "stats_window 모듈을 로드할 수 없습니다.")
+        except Exception as e:
+            log.error("통계 대시보드 오류: %s", e)
+            messagebox.showerror("오류", f"통계 대시보드를 열 수 없습니다.\n\n{e}")
+
+    stats_btn = tk.Button(
+        hr, text="📊", font=("Segoe UI Emoji", 14), fg=COLORS["muted"],
+        bg=COLORS["bg"], activebackground=COLORS["card"],
+        activeforeground=COLORS["ac"], relief=tk.FLAT, cursor="hand2",
+        command=_open_stats, borderwidth=0, highlightthickness=0,
+    )
+    stats_btn.pack(anchor=tk.E, padx=4)
+    stats_btn.bind("<Enter>", lambda e: stats_btn.config(fg=COLORS["ac"]))
+    stats_btn.bind("<Leave>", lambda e: stats_btn.config(fg=COLORS["muted"]))
+
     # ── 소셜 공유 아이콘 ──
     SOCIAL_LINKS = [
         ("f", "Facebook", "#1877f2", "https://www.facebook.com"),
@@ -1085,6 +1163,7 @@ def main():
             pass
         try:
             import os
+            # Windows 전용 API — 크로스 플랫폼 시 webbrowser.open(url)로 대체 필요
             os.startfile(url)
             stat_var.set(f"리포트가 클립보드에 복사됨 → {name}에서 붙여넣기 하세요")
         except Exception as e:

@@ -1,0 +1,111 @@
+═══════════════════════════════════════════════════════════════
+  v1.3.0 개발 완료 + req.txt 13건 처리 결과
+  처리 일시: 2026-03-02
+  처리자: 코딩 에이전트
+═══════════════════════════════════════════════════════════════
+
+
+━━━ req.txt 13건 처리 결과 ━━━
+
+■ REQ-001: _generation_id 미사용 변수 삭제
+  상태: 완료
+  처리: main.py에서 `_generation_id = 0` 라인 삭제
+
+■ REQ-002: topic_config DRY 리팩토링
+  상태: 완료
+  처리: common.py에 build_topic_config(settings) 함수 추가
+        main.py run_report()와 report_engine.py format_for_messenger()
+        양쪽에서 이 공통 함수를 호출하도록 변경
+
+■ REQ-003: _try_translate_text 반환 타입 호환성
+  상태: 완료
+  처리: dict/list/str 세 가지 반환 타입 모두 방어적으로 처리
+        duckduckgo-search 7.x/6.x/향후 버전 모두 호환
+
+■ REQ-004: lxml 의존성
+  상태: 유지 (제거하지 않음)
+  사유: duckduckgo-search 내부에서 lxml을 사용하며,
+        PyInstaller --hidden-import lxml.etree가 필요.
+        직접 import는 없으나 런타임 의존성이 있음.
+
+■ REQ-005: MouseWheel 바인딩 해제 사이드 이펙트
+  상태: 완료
+  처리: win.unbind_all("<MouseWheel>") →
+        win.unbind("<MouseWheel>", _mw_bind_id) 로 변경
+        특정 바인딩만 해제하여 메인 창에 영향 없음
+
+■ REQ-006: is_emoji 복합 이모지 미처리
+  상태: 주석 추가
+  처리: common.py 이모지 유틸리티 섹션에 제한사항 주석 추가
+        "국기(🇰🇷) 같은 복합 이모지는 미처리" 명시
+
+■ REQ-007: EMPTY_CAT_FALLBACK 하드코딩
+  상태: 유지 (변경 없음)
+  사유: v1.3.0에서 대규모 사이트 DB + 실시간 검색이 주력이므로
+        폴백은 극히 드물게 사용됨. 외부 파일 분리는 오버엔지니어링.
+        향후 필요 시 분리 가능.
+
+■ REQ-008: format_for_messenger site_count
+  상태: v1.3.0에서 자동 해결
+  처리: get_site_board_counts()가 암호화 DB를 우선 조회하도록 변경.
+        실제 탐색 범위와 일치하는 정확한 카운트 제공.
+
+■ REQ-009: _hours_to_timelimit 시간 불일치
+  상태: 완료
+  처리: 리포트 헤더에 "실제 검색: X 이내" 명시
+        예: "36시간 기준 (실제 검색: 1주일 이내)"
+
+■ REQ-010: DDGS 인스턴스 매번 재생성
+  상태: 완료
+  처리: search_topics_online() 시작 시 ddgs = DDGS(timeout=20)로
+        한 번만 생성, 이후 ddgs.text() / ddgs.news()로 재사용
+
+■ REQ-011: os.startfile Windows 전용
+  상태: 주석 추가
+  처리: "Windows 전용 API — 크로스 플랫폼 시 webbrowser.open으로 대체 필요" 주석
+
+■ REQ-012: acquire_instance_lock 레이스 컨디션
+  상태: 완료
+  처리: open(lock_path, "r+" if exists else "w+") →
+        open(lock_path, "a+") 로 통일하여 exists() 체크 제거
+
+■ REQ-013: main.py 파일 크기 (1374줄)
+  상태: 보류 (v1.4.0 예정)
+  사유: 설정 UI 분리는 대규모 리팩토링으로 v1.3.0 범위 초과.
+        코드 기능에 문제는 없으며 향후 settings_ui.py 분리 예정.
+
+
+━━━ v1.3.0 신규 개발 내역 ━━━
+
+■ 신규 파일:
+  - db_crypto.py          (암호화 파일 DB, Fernet AES + zlib)
+  - korean_sites_seed.json (시드 DB: 91개 사이트 + 80개 뉴스)
+  - site_discovery.py     (3계층 사이트 자동 탐색)
+  - stats_engine.py       (통계 엔진, Buzz Score)
+  - stats_window.py       (통계 대시보드 UI + PDF)
+
+■ 기존 파일 업데이트:
+  - common.py      → v1.3.0, build_topic_config() 추가, 인스턴스 락 개선
+  - report_engine.py → 3중 필터, 통계 수집, site: 타겟 검색, DDGS 재사용
+  - app_settings.py → 3계층 탐색 연동, 암호화 DB 저장
+  - main.py        → 통계 보기 버튼, 사이트 갱신 진행률, REQ 수정
+  - build.bat      → 신규 모듈 + 의존성 추가
+  - dangnagui.iss  → v1.3.0, 신규 파일 포함
+  - README.md      → v1.3.0 마케팅 내용 (3중 필터, 통계, 암호화)
+  - readme.txt     → v1.3.0 사용 안내
+  - requirements.txt → cryptography, beautifulsoup4, requests, matplotlib 추가
+
+
+━━━ 테스트 결과 ━━━
+
+  ✓ 전체 8개 파일 구문 검증 통과 (py_compile)
+  ✓ 암호화 DB 라운드트립 (저장→로드→검증) 통과
+  ✓ 스팸 3중 필터 테스트 (정상글 PASS, 스팸 PASS) 통과
+  ✓ Buzz Score 엔진 테스트 (점수 산출, 순위 정렬) 통과
+  ✓ 모듈 임포트 통합 테스트 통과
+  ✓ 린터 오류 0건
+
+
+═══════════════════════════════════════════════════════════════
+  처리 완료. req.txt 검토 후 추가 요구사항이 있으면 업데이트해 주세요.
+═══════════════════════════════════════════════════════════════

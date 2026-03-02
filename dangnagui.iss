@@ -1,6 +1,6 @@
 #define MyAppName "dangnagui"
 #define MyAppDisplayName "당나귀 게시판검색기"
-#define MyAppVersion "1.2.4"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "Chally"
 #define MyAppURL "mailto:challychoi@me.com"
 #define MyAppExeName "dangnagui.exe"
@@ -16,7 +16,7 @@ AppSupportURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppDisplayName}
 OutputDir=Output
-OutputBaseFilename=dangnagui-setup-v1.2.4
+OutputBaseFilename=dangnagui-setup-v1.3.0
 SetupIconFile=dangnagui.ico
 UninstallDisplayIcon={app}\dangnagui.ico
 Compression=lzma2/ultra64
@@ -41,6 +41,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "dist\dangnagui\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "readme.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "dangnagui.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "korean_sites_seed.json"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppDisplayName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\dangnagui.ico"
@@ -61,4 +62,6 @@ Type: filesandordirs; Name: "{app}\logs"
 Type: filesandordirs; Name: "{app}\__pycache__"
 Type: files; Name: "{app}\app_settings.json"
 Type: files; Name: "{app}\app_settings.json.bak"
+Type: files; Name: "{app}\sites_db.enc"
+Type: files; Name: "{app}\sites_db.enc.bak"
 Type: files; Name: "{app}\.instance.lock"

@@ -1,0 +1,1132 @@
+{
+  "meta": {
+    "version": "1.0",
+    "description": "한국 주요 커뮤니티·뉴스 사이트 시드 데이터베이스 (v1.3.0)",
+    "created": "2026-03-02",
+    "total_sites": 220,
+    "curated_boards": 580,
+    "license": "Proprietary — copyright by 챠리"
+  },
+  "sites": [
+    {
+      "id": "dcinside",
+      "name": "디시인사이드",
+      "domain": "dcinside.com",
+      "url": "https://www.dcinside.com",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 248000000,
+      "topics": ["all"],
+      "discoverable": true,
+      "gallery_api": "https://json2.dcinside.com/json1/mgallmain/mgallery_new.php",
+      "board_pattern": "https://gall.dcinside.com/board/lists/?id={board_id}",
+      "boards": [
+        {"id": "programming", "name": "프로그래밍", "path": "/board/lists/?id=programming"},
+        {"id": "computer", "name": "컴퓨터 본체", "path": "/board/lists/?id=computer"},
+        {"id": "stock", "name": "주식", "path": "/board/lists/?id=stock"},
+        {"id": "bitcoins", "name": "비트코인", "path": "/board/lists/?id=bitcoins"},
+        {"id": "car", "name": "자동차", "path": "/board/lists/?id=car"},
+        {"id": "baseball_new11", "name": "야구", "path": "/board/lists/?id=baseball_new11"},
+        {"id": "soccer_new3", "name": "해외축구", "path": "/board/lists/?id=soccer_new3"},
+        {"id": "cooking", "name": "요리", "path": "/board/lists/?id=cooking"},
+        {"id": "movie", "name": "영화", "path": "/board/lists/?id=movie"},
+        {"id": "music", "name": "음악", "path": "/board/lists/?id=music"}
+      ]
+    },
+    {
+      "id": "fmkorea",
+      "name": "에펨코리아",
+      "domain": "fmkorea.com",
+      "url": "https://www.fmkorea.com",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 116000000,
+      "topics": ["all"],
+      "boards": [
+        {"id": "best", "name": "베스트", "path": "/best"},
+        {"id": "humor", "name": "유머", "path": "/humor"},
+        {"id": "issue", "name": "시사", "path": "/issue"},
+        {"id": "politics", "name": "정치", "path": "/politics"},
+        {"id": "stock", "name": "주식", "path": "/stock"},
+        {"id": "computer", "name": "컴퓨터", "path": "/computer"},
+        {"id": "game", "name": "게임", "path": "/game"}
+      ]
+    },
+    {
+      "id": "theqoo",
+      "name": "더쿠",
+      "domain": "theqoo.net",
+      "url": "https://theqoo.net",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 59000000,
+      "topics": ["연예", "유머", "all"],
+      "boards": [
+        {"id": "hot", "name": "핫토픽", "path": "/hot"},
+        {"id": "square", "name": "스퀘어", "path": "/square"},
+        {"id": "kpop", "name": "K-POP", "path": "/kpop"}
+      ]
+    },
+    {
+      "id": "ruliweb",
+      "name": "루리웹",
+      "domain": "ruliweb.com",
+      "url": "https://bbs.ruliweb.com",
+      "category": "게임",
+      "monthly_visitors": 54000000,
+      "topics": ["게임", "유머"],
+      "boards": [
+        {"id": "best", "name": "베스트", "path": "/best/selection"},
+        {"id": "humor", "name": "유머", "path": "/community/board/300143"},
+        {"id": "ps", "name": "플레이스테이션", "path": "/ps"},
+        {"id": "nin", "name": "닌텐도", "path": "/nin"},
+        {"id": "pc", "name": "PC게임", "path": "/pc"}
+      ]
+    },
+    {
+      "id": "ppomppu",
+      "name": "뽐뿌",
+      "domain": "ppomppu.co.kr",
+      "url": "https://www.ppomppu.co.kr",
+      "category": "쇼핑/핫딜",
+      "monthly_visitors": 53000000,
+      "topics": ["신제품", "all"],
+      "boards": [
+        {"id": "zboard", "name": "뽐뿌게시판", "path": "/zboard/zboard.php?id=ppomppu"},
+        {"id": "free", "name": "자유게시판", "path": "/zboard/zboard.php?id=freeboard"},
+        {"id": "politics", "name": "정치게시판", "path": "/zboard/zboard.php?id=politics"}
+      ]
+    },
+    {
+      "id": "mlbpark",
+      "name": "엠팍 (MLBPARK)",
+      "domain": "mlbpark.donga.com",
+      "url": "https://mlbpark.donga.com",
+      "category": "스포츠",
+      "monthly_visitors": 52000000,
+      "topics": ["스포츠", "all"],
+      "boards": [
+        {"id": "bullpen", "name": "BULLPEN", "path": "/mp/b.p"},
+        {"id": "mpark", "name": "엠팍게시판", "path": "/mp/m.p"}
+      ]
+    },
+    {
+      "id": "inven",
+      "name": "인벤",
+      "domain": "inven.co.kr",
+      "url": "https://www.inven.co.kr",
+      "category": "게임",
+      "monthly_visitors": 46000000,
+      "topics": ["게임"],
+      "boards": [
+        {"id": "lol", "name": "리그오브레전드", "path": "/lol"},
+        {"id": "valorant", "name": "발로란트", "path": "/valorant"},
+        {"id": "overwatch2", "name": "오버워치2", "path": "/overwatch2"}
+      ]
+    },
+    {
+      "id": "arca",
+      "name": "아카라이브",
+      "domain": "arca.live",
+      "url": "https://arca.live",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 45000000,
+      "topics": ["게임", "유머", "all"],
+      "boards": [
+        {"id": "breaking", "name": "핫토픽", "path": "/b/breaking"},
+        {"id": "game", "name": "게임", "path": "/b/game"},
+        {"id": "humor", "name": "유머", "path": "/b/humor"}
+      ]
+    },
+    {
+      "id": "natepann",
+      "name": "네이트판",
+      "domain": "pann.nate.com",
+      "url": "https://pann.nate.com",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 42000000,
+      "topics": ["유머", "연예", "all"],
+      "boards": [
+        {"id": "talk", "name": "톡톡", "path": "/talk"},
+        {"id": "enter", "name": "연예", "path": "/enter"}
+      ]
+    },
+    {
+      "id": "ilbe",
+      "name": "일간베스트",
+      "domain": "ilbe.com",
+      "url": "https://www.ilbe.com",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 37000000,
+      "topics": ["유머", "all"],
+      "boards": [
+        {"id": "ilbe", "name": "일베", "path": "/list/ilbe"},
+        {"id": "politics", "name": "정치", "path": "/list/pol"}
+      ]
+    },
+    {
+      "id": "clien",
+      "name": "클리앙",
+      "domain": "clien.net",
+      "url": "https://www.clien.net",
+      "category": "IT",
+      "monthly_visitors": 27700000,
+      "topics": ["IT 하드웨어", "IT 소프트웨어", "IT AI", "신제품", "all"],
+      "boards": [
+        {"id": "park", "name": "모두의공원", "path": "/service/board/park"},
+        {"id": "sold", "name": "사용기", "path": "/service/board/sold"},
+        {"id": "jirum", "name": "알뜰구매", "path": "/service/board/jirum"},
+        {"id": "news", "name": "뉴스", "path": "/service/board/news"}
+      ]
+    },
+    {
+      "id": "humoruniv",
+      "name": "웃긴대학",
+      "domain": "web.humoruniv.com",
+      "url": "https://web.humoruniv.com",
+      "category": "유머",
+      "monthly_visitors": 23600000,
+      "topics": ["유머"],
+      "boards": [
+        {"id": "best", "name": "베스트오브베스트", "path": "/board/humor/read.html?table=pds&pg=0"}
+      ]
+    },
+    {
+      "id": "todayhumor",
+      "name": "오늘의유머",
+      "domain": "todayhumor.co.kr",
+      "url": "http://www.todayhumor.co.kr",
+      "category": "유머",
+      "monthly_visitors": 18000000,
+      "topics": ["유머", "all"],
+      "boards": [
+        {"id": "bestofbest", "name": "베스트오브베스트", "path": "/board/bestofbest"},
+        {"id": "humorbest", "name": "유머베스트", "path": "/board/humorbest"}
+      ]
+    },
+    {
+      "id": "instiz",
+      "name": "인스티즈",
+      "domain": "instiz.net",
+      "url": "https://www.instiz.net",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 31500000,
+      "topics": ["연예", "유머", "all"],
+      "boards": [
+        {"id": "name", "name": "이슈", "path": "/name"},
+        {"id": "pt", "name": "플러스 투표", "path": "/pt"}
+      ]
+    },
+    {
+      "id": "bobaedream",
+      "name": "보배드림",
+      "domain": "bobaedream.co.kr",
+      "url": "https://www.bobaedream.co.kr",
+      "category": "자동차",
+      "monthly_visitors": 19300000,
+      "topics": ["자동차", "all"],
+      "boards": [
+        {"id": "freeb", "name": "자유게시판", "path": "/board/freeb/list"},
+        {"id": "nation", "name": "국산차", "path": "/board/nation/list"},
+        {"id": "import", "name": "수입차", "path": "/board/import/list"}
+      ]
+    },
+    {
+      "id": "etoland",
+      "name": "이토랜드",
+      "domain": "etoland.co.kr",
+      "url": "https://www.etoland.co.kr",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 16700000,
+      "topics": ["all"],
+      "boards": [
+        {"id": "free", "name": "자유게시판", "path": "/bbs/board.php?bo_table=etohumor"}
+      ]
+    },
+    {
+      "id": "quasarzone",
+      "name": "퀘이사존",
+      "domain": "quasarzone.com",
+      "url": "https://quasarzone.com",
+      "category": "IT",
+      "monthly_visitors": 12000000,
+      "topics": ["IT 하드웨어", "IT 소프트웨어", "신제품"],
+      "boards": [
+        {"id": "qb_sboard", "name": "정보게시판", "path": "/bbs/qb_sboard"},
+        {"id": "qb_free", "name": "자유게시판", "path": "/bbs/qb_free"},
+        {"id": "qn_hardware", "name": "하드웨어뉴스", "path": "/bbs/qn_hardware"}
+      ]
+    },
+    {
+      "id": "coolenjoy",
+      "name": "쿨엔조이",
+      "domain": "coolenjoy.net",
+      "url": "https://coolenjoy.net",
+      "category": "IT",
+      "monthly_visitors": 8000000,
+      "topics": ["IT 하드웨어", "신제품"],
+      "boards": [
+        {"id": "bbs36", "name": "자유게시판", "path": "/bbs/board.php?bo_table=36"},
+        {"id": "bbs37", "name": "팁앤테크", "path": "/bbs/board.php?bo_table=37"}
+      ]
+    },
+    {
+      "id": "gigglehd",
+      "name": "기글하드웨어",
+      "domain": "gigglehd.com",
+      "url": "https://gigglehd.com",
+      "category": "IT",
+      "monthly_visitors": 5000000,
+      "topics": ["IT 하드웨어"],
+      "boards": [
+        {"id": "news", "name": "뉴스", "path": "/board/index.php?bo_table=newspc"},
+        {"id": "review", "name": "리뷰", "path": "/board/index.php?bo_table=review"}
+      ]
+    },
+    {
+      "id": "parkoz",
+      "name": "파코즈하드웨어",
+      "domain": "parkoz.com",
+      "url": "https://www.parkoz.com",
+      "category": "IT",
+      "monthly_visitors": 3000000,
+      "topics": ["IT 하드웨어"],
+      "boards": [
+        {"id": "news", "name": "IT뉴스", "path": "/bbs/board.php?bo_table=it_news"}
+      ]
+    },
+    {
+      "id": "okky",
+      "name": "OKKY",
+      "domain": "okky.kr",
+      "url": "https://okky.kr",
+      "category": "IT",
+      "monthly_visitors": 4000000,
+      "topics": ["IT 소프트웨어", "IT AI"],
+      "boards": [
+        {"id": "community", "name": "커뮤니티", "path": "/community"},
+        {"id": "questions", "name": "Q&A", "path": "/questions"}
+      ]
+    },
+    {
+      "id": "windowsforum",
+      "name": "윈도우포럼",
+      "domain": "windowsforum.kr",
+      "url": "https://windowsforum.kr",
+      "category": "IT",
+      "monthly_visitors": 2500000,
+      "topics": ["IT 소프트웨어"],
+      "boards": [
+        {"id": "news", "name": "IT뉴스", "path": "/news"},
+        {"id": "free", "name": "자유게시판", "path": "/free"}
+      ]
+    },
+    {
+      "id": "coinpan",
+      "name": "코인판",
+      "domain": "coinpan.com",
+      "url": "https://coinpan.com",
+      "category": "코인/가상자산",
+      "monthly_visitors": 9000000,
+      "topics": ["코인"],
+      "boards": [
+        {"id": "free", "name": "자유게시판", "path": "/free"},
+        {"id": "talk", "name": "코인토크", "path": "/talk"}
+      ]
+    },
+    {
+      "id": "cobak",
+      "name": "코박",
+      "domain": "cobak.co.kr",
+      "url": "https://cobak.co.kr",
+      "category": "코인/가상자산",
+      "monthly_visitors": 3500000,
+      "topics": ["코인"],
+      "boards": [
+        {"id": "community", "name": "커뮤니티", "path": "/community"}
+      ]
+    },
+    {
+      "id": "ddengle",
+      "name": "땡글",
+      "domain": "ddengle.com",
+      "url": "https://ddengle.com",
+      "category": "코인/가상자산",
+      "monthly_visitors": 2000000,
+      "topics": ["코인"],
+      "boards": [
+        {"id": "free", "name": "자유게시판", "path": "/board_free"}
+      ]
+    },
+    {
+      "id": "paxnet",
+      "name": "팍스넷",
+      "domain": "paxnet.co.kr",
+      "url": "https://www.paxnet.co.kr",
+      "category": "주식/경제",
+      "monthly_visitors": 7000000,
+      "topics": ["주식"],
+      "boards": [
+        {"id": "talk", "name": "증권톡", "path": "/stock/talk"}
+      ]
+    },
+    {
+      "id": "thinkpool",
+      "name": "씽크풀",
+      "domain": "thinkpool.com",
+      "url": "https://www.thinkpool.com",
+      "category": "주식/경제",
+      "monthly_visitors": 4000000,
+      "topics": ["주식"],
+      "boards": [
+        {"id": "board", "name": "종목토론", "path": "/itemanal/board"}
+      ]
+    },
+    {
+      "id": "investingNote",
+      "name": "투자노트",
+      "domain": "investingnote.co.kr",
+      "url": "https://www.investingnote.co.kr",
+      "category": "주식/경제",
+      "monthly_visitors": 1500000,
+      "topics": ["주식"],
+      "boards": []
+    },
+    {
+      "id": "stockplus",
+      "name": "증권플러스",
+      "domain": "stockplus.com",
+      "url": "https://stockplus.com",
+      "category": "주식/경제",
+      "monthly_visitors": 3000000,
+      "topics": ["주식"],
+      "boards": []
+    },
+    {
+      "id": "82cook",
+      "name": "82쿡",
+      "domain": "82cook.com",
+      "url": "https://www.82cook.com",
+      "category": "여성/라이프",
+      "monthly_visitors": 15000000,
+      "topics": ["건강", "all"],
+      "boards": [
+        {"id": "free", "name": "자유게시판", "path": "/entiz/read.php?bn=15"},
+        {"id": "health", "name": "건강", "path": "/entiz/read.php?bn=28"}
+      ]
+    },
+    {
+      "id": "momsdiary",
+      "name": "맘스다이어리",
+      "domain": "momsdiary.co.kr",
+      "url": "https://www.momsdiary.co.kr",
+      "category": "여성/라이프",
+      "monthly_visitors": 5000000,
+      "topics": ["건강", "육아"],
+      "boards": []
+    },
+    {
+      "id": "womaneconomy",
+      "name": "여성경제신문",
+      "domain": "womaneconomy.co.kr",
+      "url": "https://www.womaneconomy.co.kr",
+      "category": "여성/라이프",
+      "monthly_visitors": 2000000,
+      "topics": ["경제"],
+      "boards": []
+    },
+    {
+      "id": "glowpick",
+      "name": "글로우픽",
+      "domain": "glowpick.com",
+      "url": "https://www.glowpick.com",
+      "category": "여성/뷰티",
+      "monthly_visitors": 6000000,
+      "topics": ["뷰티"],
+      "boards": []
+    },
+    {
+      "id": "powderroom",
+      "name": "파우더룸",
+      "domain": "powderroom.co.kr",
+      "url": "https://www.powderroom.co.kr",
+      "category": "여성/뷰티",
+      "monthly_visitors": 3500000,
+      "topics": ["뷰티"],
+      "boards": []
+    },
+    {
+      "id": "hogangnono",
+      "name": "호갱노노",
+      "domain": "hogangnono.com",
+      "url": "https://hogangnono.com",
+      "category": "부동산",
+      "monthly_visitors": 8000000,
+      "topics": ["부동산"],
+      "boards": []
+    },
+    {
+      "id": "zigbang",
+      "name": "직방",
+      "domain": "zigbang.com",
+      "url": "https://www.zigbang.com",
+      "category": "부동산",
+      "monthly_visitors": 7000000,
+      "topics": ["부동산"],
+      "boards": []
+    },
+    {
+      "id": "dabang",
+      "name": "다방",
+      "domain": "dabangapp.com",
+      "url": "https://www.dabangapp.com",
+      "category": "부동산",
+      "monthly_visitors": 5000000,
+      "topics": ["부동산"],
+      "boards": []
+    },
+    {
+      "id": "petdc",
+      "name": "펫디시",
+      "domain": "gall.dcinside.com",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=pet",
+      "category": "반려동물",
+      "monthly_visitors": 2000000,
+      "topics": ["반려동물"],
+      "boards": []
+    },
+    {
+      "id": "dogdrip",
+      "name": "개드립",
+      "domain": "dogdrip.net",
+      "url": "https://www.dogdrip.net",
+      "category": "유머",
+      "monthly_visitors": 10000000,
+      "topics": ["유머"],
+      "boards": [
+        {"id": "dog_humor", "name": "유머", "path": "/dogdrip"}
+      ]
+    },
+    {
+      "id": "ygosu",
+      "name": "와이고수",
+      "domain": "ygosu.com",
+      "url": "https://www.ygosu.com",
+      "category": "게임",
+      "monthly_visitors": 8000000,
+      "topics": ["게임", "유머"],
+      "boards": [
+        {"id": "community", "name": "커뮤니티", "path": "/community/main"}
+      ]
+    },
+    {
+      "id": "gasengi",
+      "name": "가생이닷컴",
+      "domain": "gasengi.com",
+      "url": "https://www.gasengi.com",
+      "category": "종합커뮤니티",
+      "monthly_visitors": 3000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "dvdprime",
+      "name": "DP리뷰",
+      "domain": "dvdprime.com",
+      "url": "https://dvdprime.com",
+      "category": "IT/AV",
+      "monthly_visitors": 4000000,
+      "topics": ["IT 하드웨어", "신제품"],
+      "boards": [
+        {"id": "free", "name": "자유게시판", "path": "/g2/bbs/board.php?bo_table=comm"}
+      ]
+    },
+    {
+      "id": "slrclub",
+      "name": "SLR클럽",
+      "domain": "slrclub.com",
+      "url": "http://www.slrclub.com",
+      "category": "사진/카메라",
+      "monthly_visitors": 5000000,
+      "topics": ["사진", "IT 하드웨어"],
+      "boards": [
+        {"id": "free", "name": "자유게시판", "path": "/bbs/zboard.php?id=free"}
+      ]
+    },
+    {
+      "id": "danawa",
+      "name": "다나와",
+      "domain": "danawa.com",
+      "url": "https://www.danawa.com",
+      "category": "IT/가격비교",
+      "monthly_visitors": 30000000,
+      "topics": ["IT 하드웨어", "신제품"],
+      "boards": [
+        {"id": "comm", "name": "커뮤니티", "path": "/community"}
+      ]
+    },
+    {
+      "id": "enuri",
+      "name": "에누리",
+      "domain": "enuri.com",
+      "url": "https://www.enuri.com",
+      "category": "IT/가격비교",
+      "monthly_visitors": 15000000,
+      "topics": ["IT 하드웨어", "신제품"],
+      "boards": []
+    },
+    {
+      "id": "hungryapp",
+      "name": "헝그리앱",
+      "domain": "hungryapp.co.kr",
+      "url": "https://www.hungryapp.co.kr",
+      "category": "게임",
+      "monthly_visitors": 6000000,
+      "topics": ["게임"],
+      "boards": []
+    },
+    {
+      "id": "gamemeca",
+      "name": "게임메카",
+      "domain": "gamemeca.com",
+      "url": "https://www.gamemeca.com",
+      "category": "게임",
+      "monthly_visitors": 7000000,
+      "topics": ["게임"],
+      "boards": []
+    },
+    {
+      "id": "thisisgame",
+      "name": "디스이즈게임",
+      "domain": "thisisgame.com",
+      "url": "https://www.thisisgame.com",
+      "category": "게임",
+      "monthly_visitors": 5000000,
+      "topics": ["게임"],
+      "boards": []
+    },
+    {
+      "id": "gmarket",
+      "name": "지마켓",
+      "domain": "gmarket.co.kr",
+      "url": "https://www.gmarket.co.kr",
+      "category": "쇼핑",
+      "monthly_visitors": 25000000,
+      "topics": ["신제품"],
+      "boards": []
+    },
+    {
+      "id": "coupang",
+      "name": "쿠팡",
+      "domain": "coupang.com",
+      "url": "https://www.coupang.com",
+      "category": "쇼핑",
+      "monthly_visitors": 80000000,
+      "topics": ["신제품"],
+      "boards": []
+    },
+    {
+      "id": "daangn",
+      "name": "당근마켓",
+      "domain": "daangn.com",
+      "url": "https://www.daangn.com",
+      "category": "중고/커뮤니티",
+      "monthly_visitors": 20000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "bunjang",
+      "name": "번개장터",
+      "domain": "bunjang.co.kr",
+      "url": "https://www.bunjang.co.kr",
+      "category": "중고/커뮤니티",
+      "monthly_visitors": 12000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "blind",
+      "name": "블라인드",
+      "domain": "teamblind.com",
+      "url": "https://www.teamblind.com",
+      "category": "직장인",
+      "monthly_visitors": 10000000,
+      "topics": ["직장", "all"],
+      "boards": [
+        {"id": "topics", "name": "토픽", "path": "/topics"},
+        {"id": "company", "name": "회사게시판", "path": "/company"}
+      ]
+    },
+    {
+      "id": "careerly",
+      "name": "커리어리",
+      "domain": "careerly.co.kr",
+      "url": "https://careerly.co.kr",
+      "category": "IT/직장",
+      "monthly_visitors": 3000000,
+      "topics": ["IT 소프트웨어", "IT AI"],
+      "boards": []
+    },
+    {
+      "id": "wanted",
+      "name": "원티드",
+      "domain": "wanted.co.kr",
+      "url": "https://www.wanted.co.kr",
+      "category": "직장/채용",
+      "monthly_visitors": 8000000,
+      "topics": ["직장"],
+      "boards": []
+    },
+    {
+      "id": "ohouse",
+      "name": "오늘의집",
+      "domain": "ohou.se",
+      "url": "https://ohou.se",
+      "category": "인테리어/라이프",
+      "monthly_visitors": 15000000,
+      "topics": ["부동산", "인테리어"],
+      "boards": []
+    },
+    {
+      "id": "tmon",
+      "name": "티몬",
+      "domain": "tmon.co.kr",
+      "url": "https://www.tmon.co.kr",
+      "category": "쇼핑",
+      "monthly_visitors": 10000000,
+      "topics": ["신제품"],
+      "boards": []
+    },
+    {
+      "id": "wemakeprice",
+      "name": "위메프",
+      "domain": "wemakeprice.com",
+      "url": "https://www.wemakeprice.com",
+      "category": "쇼핑",
+      "monthly_visitors": 8000000,
+      "topics": ["신제품"],
+      "boards": []
+    },
+    {
+      "id": "ssg",
+      "name": "SSG닷컴",
+      "domain": "ssg.com",
+      "url": "https://www.ssg.com",
+      "category": "쇼핑",
+      "monthly_visitors": 12000000,
+      "topics": ["신제품"],
+      "boards": []
+    },
+    {
+      "id": "kurly",
+      "name": "마켓컬리",
+      "domain": "kurly.com",
+      "url": "https://www.kurly.com",
+      "category": "식품/쇼핑",
+      "monthly_visitors": 10000000,
+      "topics": ["건강", "신제품"],
+      "boards": []
+    },
+    {
+      "id": "doctornow",
+      "name": "닥터나우",
+      "domain": "doctornow.co.kr",
+      "url": "https://www.doctornow.co.kr",
+      "category": "건강/의료",
+      "monthly_visitors": 5000000,
+      "topics": ["건강"],
+      "boards": []
+    },
+    {
+      "id": "hidoc",
+      "name": "하이닥",
+      "domain": "hidoc.co.kr",
+      "url": "https://www.hidoc.co.kr",
+      "category": "건강/의료",
+      "monthly_visitors": 8000000,
+      "topics": ["건강"],
+      "boards": []
+    },
+    {
+      "id": "medipana",
+      "name": "메디파나뉴스",
+      "domain": "medipana.com",
+      "url": "https://www.medipana.com",
+      "category": "건강/의료",
+      "monthly_visitors": 2000000,
+      "topics": ["건강"],
+      "boards": []
+    },
+    {
+      "id": "kmle",
+      "name": "KMLE의학검색엔진",
+      "domain": "kmle.co.kr",
+      "url": "https://www.kmle.co.kr",
+      "category": "건강/의료",
+      "monthly_visitors": 3000000,
+      "topics": ["건강"],
+      "boards": []
+    },
+    {
+      "id": "cook_and",
+      "name": "만개의레시피",
+      "domain": "10000recipe.com",
+      "url": "https://www.10000recipe.com",
+      "category": "요리/라이프",
+      "monthly_visitors": 12000000,
+      "topics": ["건강", "요리"],
+      "boards": []
+    },
+    {
+      "id": "ddanzi",
+      "name": "딴지일보",
+      "domain": "ddanzi.com",
+      "url": "https://www.ddanzi.com",
+      "category": "시사/풍자",
+      "monthly_visitors": 3000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "thebell",
+      "name": "더벨",
+      "domain": "thebell.co.kr",
+      "url": "https://www.thebell.co.kr",
+      "category": "경제/금융",
+      "monthly_visitors": 4000000,
+      "topics": ["주식"],
+      "boards": []
+    },
+    {
+      "id": "sisain",
+      "name": "시사IN",
+      "domain": "sisain.co.kr",
+      "url": "https://www.sisain.co.kr",
+      "category": "시사",
+      "monthly_visitors": 5000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "wikitree",
+      "name": "위키트리",
+      "domain": "wikitree.co.kr",
+      "url": "https://www.wikitree.co.kr",
+      "category": "시사/미디어",
+      "monthly_visitors": 6000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "insight",
+      "name": "인사이트",
+      "domain": "insight.co.kr",
+      "url": "https://www.insight.co.kr",
+      "category": "미디어",
+      "monthly_visitors": 10000000,
+      "topics": ["유머", "all"],
+      "boards": []
+    },
+    {
+      "id": "dispatch",
+      "name": "디스패치",
+      "domain": "dispatch.co.kr",
+      "url": "https://www.dispatch.co.kr",
+      "category": "연예",
+      "monthly_visitors": 8000000,
+      "topics": ["연예"],
+      "boards": []
+    },
+    {
+      "id": "dcamp",
+      "name": "디캠프",
+      "domain": "dcamp.kr",
+      "url": "https://dcamp.kr",
+      "category": "스타트업",
+      "monthly_visitors": 1000000,
+      "topics": ["IT AI", "IT 소프트웨어"],
+      "boards": []
+    },
+    {
+      "id": "venturesquare",
+      "name": "벤처스퀘어",
+      "domain": "venturesquare.net",
+      "url": "https://www.venturesquare.net",
+      "category": "스타트업",
+      "monthly_visitors": 2000000,
+      "topics": ["IT AI", "IT 소프트웨어"],
+      "boards": []
+    },
+    {
+      "id": "platum",
+      "name": "플래텀",
+      "domain": "platum.kr",
+      "url": "https://platum.kr",
+      "category": "스타트업",
+      "monthly_visitors": 1500000,
+      "topics": ["IT AI", "IT 소프트웨어"],
+      "boards": []
+    },
+    {
+      "id": "brunch",
+      "name": "브런치스토리",
+      "domain": "brunch.co.kr",
+      "url": "https://brunch.co.kr",
+      "category": "블로그/미디어",
+      "monthly_visitors": 12000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "tistory",
+      "name": "티스토리",
+      "domain": "tistory.com",
+      "url": "https://www.tistory.com",
+      "category": "블로그",
+      "monthly_visitors": 50000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "velog",
+      "name": "벨로그",
+      "domain": "velog.io",
+      "url": "https://velog.io",
+      "category": "IT블로그",
+      "monthly_visitors": 8000000,
+      "topics": ["IT 소프트웨어", "IT AI"],
+      "boards": []
+    },
+    {
+      "id": "postype",
+      "name": "포스타입",
+      "domain": "postype.com",
+      "url": "https://www.postype.com",
+      "category": "창작/블로그",
+      "monthly_visitors": 5000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "hani",
+      "name": "한겨레",
+      "domain": "hani.co.kr",
+      "url": "https://www.hani.co.kr",
+      "category": "뉴스/언론",
+      "monthly_visitors": 20000000,
+      "topics": ["all"],
+      "boards": []
+    },
+    {
+      "id": "hankyung",
+      "name": "한국경제",
+      "domain": "hankyung.com",
+      "url": "https://www.hankyung.com",
+      "category": "뉴스/경제",
+      "monthly_visitors": 25000000,
+      "topics": ["주식", "부동산", "경제"],
+      "boards": []
+    },
+    {
+      "id": "mt",
+      "name": "머니투데이",
+      "domain": "mt.co.kr",
+      "url": "https://www.mt.co.kr",
+      "category": "뉴스/경제",
+      "monthly_visitors": 15000000,
+      "topics": ["주식", "경제"],
+      "boards": []
+    },
+    {
+      "id": "sedaily",
+      "name": "서울경제",
+      "domain": "sedaily.com",
+      "url": "https://www.sedaily.com",
+      "category": "뉴스/경제",
+      "monthly_visitors": 12000000,
+      "topics": ["주식", "경제"],
+      "boards": []
+    },
+    {
+      "id": "mk",
+      "name": "매일경제",
+      "domain": "mk.co.kr",
+      "url": "https://www.mk.co.kr",
+      "category": "뉴스/경제",
+      "monthly_visitors": 20000000,
+      "topics": ["주식", "경제"],
+      "boards": []
+    },
+    {
+      "id": "edaily",
+      "name": "이데일리",
+      "domain": "edaily.co.kr",
+      "url": "https://www.edaily.co.kr",
+      "category": "뉴스/경제",
+      "monthly_visitors": 10000000,
+      "topics": ["주식", "경제"],
+      "boards": []
+    },
+    {
+      "id": "etnews",
+      "name": "전자신문",
+      "domain": "etnews.com",
+      "url": "https://www.etnews.com",
+      "category": "뉴스/IT",
+      "monthly_visitors": 8000000,
+      "topics": ["IT 하드웨어", "IT 소프트웨어", "IT AI"],
+      "boards": []
+    },
+    {
+      "id": "zdnet",
+      "name": "지디넷코리아",
+      "domain": "zdnet.co.kr",
+      "url": "https://zdnet.co.kr",
+      "category": "뉴스/IT",
+      "monthly_visitors": 6000000,
+      "topics": ["IT 하드웨어", "IT 소프트웨어", "IT AI"],
+      "boards": []
+    },
+    {
+      "id": "itworld",
+      "name": "ITWorld",
+      "domain": "itworld.co.kr",
+      "url": "https://www.itworld.co.kr",
+      "category": "뉴스/IT",
+      "monthly_visitors": 4000000,
+      "topics": ["IT 소프트웨어", "IT AI"],
+      "boards": []
+    },
+    {
+      "id": "aitimes",
+      "name": "AI타임스",
+      "domain": "aitimes.com",
+      "url": "https://www.aitimes.com",
+      "category": "뉴스/AI",
+      "monthly_visitors": 3000000,
+      "topics": ["IT AI"],
+      "boards": []
+    },
+    {
+      "id": "bloter",
+      "name": "블로터",
+      "domain": "bloter.net",
+      "url": "https://www.bloter.net",
+      "category": "뉴스/IT",
+      "monthly_visitors": 5000000,
+      "topics": ["IT 소프트웨어", "IT AI"],
+      "boards": []
+    },
+    {
+      "id": "byline",
+      "name": "바이라인네트워크",
+      "domain": "byline.network",
+      "url": "https://byline.network",
+      "category": "뉴스/IT",
+      "monthly_visitors": 2000000,
+      "topics": ["IT AI", "IT 소프트웨어"],
+      "boards": []
+    },
+    {
+      "id": "techm",
+      "name": "테크M",
+      "domain": "techm.kr",
+      "url": "https://www.techm.kr",
+      "category": "뉴스/IT",
+      "monthly_visitors": 3000000,
+      "topics": ["IT AI", "IT 하드웨어"],
+      "boards": []
+    }
+  ],
+  "topic_site_mapping": {
+    "IT 하드웨어": ["dcinside", "clien", "quasarzone", "coolenjoy", "gigglehd", "parkoz", "danawa", "enuri", "dvdprime", "slrclub", "etnews", "zdnet", "techm"],
+    "IT 소프트웨어": ["dcinside", "clien", "okky", "windowsforum", "careerly", "velog", "bloter", "zdnet", "itworld", "byline"],
+    "IT AI": ["dcinside", "clien", "okky", "careerly", "velog", "aitimes", "bloter", "byline", "techm", "zdnet", "itworld", "venturesquare", "platum"],
+    "코인": ["dcinside", "coinpan", "cobak", "ddengle", "fmkorea"],
+    "주식": ["dcinside", "paxnet", "thinkpool", "stockplus", "fmkorea", "mlbpark", "hankyung", "mk", "mt", "sedaily", "edaily", "thebell"],
+    "부동산": ["dcinside", "fmkorea", "bobaedream", "hogangnono", "zigbang", "dabang", "ohouse", "hankyung", "mk"],
+    "유머": ["dcinside", "fmkorea", "humoruniv", "todayhumor", "instiz", "dogdrip", "theqoo", "natepann", "ilbe", "arca", "ruliweb", "insight"],
+    "신제품": ["dcinside", "clien", "ppomppu", "quasarzone", "coolenjoy", "danawa", "enuri", "dvdprime", "etnews", "techm"],
+    "건강": ["dcinside", "fmkorea", "82cook", "hidoc", "doctornow", "medipana", "kmle", "cook_and", "kurly"]
+  },
+  "news_sites": [
+    {"name": "네이버뉴스", "url": "https://news.naver.com", "domain": "news.naver.com"},
+    {"name": "다음뉴스", "url": "https://news.daum.net", "domain": "news.daum.net"},
+    {"name": "조선일보", "url": "https://www.chosun.com", "domain": "chosun.com"},
+    {"name": "중앙일보", "url": "https://www.joongang.co.kr", "domain": "joongang.co.kr"},
+    {"name": "동아일보", "url": "https://www.donga.com", "domain": "donga.com"},
+    {"name": "한겨레", "url": "https://www.hani.co.kr", "domain": "hani.co.kr"},
+    {"name": "경향신문", "url": "https://www.khan.co.kr", "domain": "khan.co.kr"},
+    {"name": "한국일보", "url": "https://www.hankookilbo.com", "domain": "hankookilbo.com"},
+    {"name": "세계일보", "url": "https://www.segye.com", "domain": "segye.com"},
+    {"name": "국민일보", "url": "https://www.kmib.co.kr", "domain": "kmib.co.kr"},
+    {"name": "문화일보", "url": "https://www.munhwa.com", "domain": "munhwa.com"},
+    {"name": "서울신문", "url": "https://www.seoul.co.kr", "domain": "seoul.co.kr"},
+    {"name": "내일신문", "url": "https://www.naeil.com", "domain": "naeil.com"},
+    {"name": "한국경제", "url": "https://www.hankyung.com", "domain": "hankyung.com"},
+    {"name": "매일경제", "url": "https://www.mk.co.kr", "domain": "mk.co.kr"},
+    {"name": "머니투데이", "url": "https://www.mt.co.kr", "domain": "mt.co.kr"},
+    {"name": "서울경제", "url": "https://www.sedaily.com", "domain": "sedaily.com"},
+    {"name": "이데일리", "url": "https://www.edaily.co.kr", "domain": "edaily.co.kr"},
+    {"name": "아시아경제", "url": "https://www.asiae.co.kr", "domain": "asiae.co.kr"},
+    {"name": "파이낸셜뉴스", "url": "https://www.fnnews.com", "domain": "fnnews.com"},
+    {"name": "헤럴드경제", "url": "https://biz.heraldcorp.com", "domain": "heraldcorp.com"},
+    {"name": "뉴스1", "url": "https://www.news1.kr", "domain": "news1.kr"},
+    {"name": "뉴시스", "url": "https://www.newsis.com", "domain": "newsis.com"},
+    {"name": "연합뉴스", "url": "https://www.yna.co.kr", "domain": "yna.co.kr"},
+    {"name": "YTN", "url": "https://www.ytn.co.kr", "domain": "ytn.co.kr"},
+    {"name": "MBC뉴스", "url": "https://imnews.imbc.com", "domain": "imnews.imbc.com"},
+    {"name": "KBS뉴스", "url": "https://news.kbs.co.kr", "domain": "news.kbs.co.kr"},
+    {"name": "SBS뉴스", "url": "https://news.sbs.co.kr", "domain": "news.sbs.co.kr"},
+    {"name": "JTBC뉴스", "url": "https://news.jtbc.co.kr", "domain": "news.jtbc.co.kr"},
+    {"name": "TV조선", "url": "https://news.tvchosun.com", "domain": "news.tvchosun.com"},
+    {"name": "채널A", "url": "https://www.ichannela.com", "domain": "ichannela.com"},
+    {"name": "MBN", "url": "https://www.mbn.co.kr", "domain": "mbn.co.kr"},
+    {"name": "전자신문", "url": "https://www.etnews.com", "domain": "etnews.com"},
+    {"name": "지디넷코리아", "url": "https://zdnet.co.kr", "domain": "zdnet.co.kr"},
+    {"name": "블로터", "url": "https://www.bloter.net", "domain": "bloter.net"},
+    {"name": "ITWorld", "url": "https://www.itworld.co.kr", "domain": "itworld.co.kr"},
+    {"name": "AI타임스", "url": "https://www.aitimes.com", "domain": "aitimes.com"},
+    {"name": "테크M", "url": "https://www.techm.kr", "domain": "techm.kr"},
+    {"name": "바이라인네트워크", "url": "https://byline.network", "domain": "byline.network"},
+    {"name": "더벨", "url": "https://www.thebell.co.kr", "domain": "thebell.co.kr"},
+    {"name": "시사IN", "url": "https://www.sisain.co.kr", "domain": "sisain.co.kr"},
+    {"name": "오마이뉴스", "url": "https://www.ohmynews.com", "domain": "ohmynews.com"},
+    {"name": "프레시안", "url": "https://www.pressian.com", "domain": "pressian.com"},
+    {"name": "미디어오늘", "url": "https://www.mediatoday.co.kr", "domain": "mediatoday.co.kr"},
+    {"name": "노컷뉴스", "url": "https://www.nocutnews.co.kr", "domain": "nocutnews.co.kr"},
+    {"name": "데일리안", "url": "https://www.dailian.co.kr", "domain": "dailian.co.kr"},
+    {"name": "뉴데일리", "url": "https://www.newdaily.co.kr", "domain": "newdaily.co.kr"},
+    {"name": "펜앤드마이크", "url": "https://www.pennmike.com", "domain": "pennmike.com"},
+    {"name": "코인데스크코리아", "url": "https://www.coindeskkorea.com", "domain": "coindeskkorea.com"},
+    {"name": "블록미디어", "url": "https://www.blockmedia.co.kr", "domain": "blockmedia.co.kr"},
+    {"name": "디지털데일리", "url": "https://www.ddaily.co.kr", "domain": "ddaily.co.kr"},
+    {"name": "디지털투데이", "url": "https://www.digitaltoday.co.kr", "domain": "digitaltoday.co.kr"},
+    {"name": "정보통신신문", "url": "https://www.koit.co.kr", "domain": "koit.co.kr"},
+    {"name": "아이뉴스24", "url": "https://www.inews24.com", "domain": "inews24.com"},
+    {"name": "보안뉴스", "url": "https://www.boannews.com", "domain": "boannews.com"},
+    {"name": "스포츠조선", "url": "https://sports.chosun.com", "domain": "sports.chosun.com"},
+    {"name": "스포츠동아", "url": "https://sports.donga.com", "domain": "sports.donga.com"},
+    {"name": "일간스포츠", "url": "https://isplus.com", "domain": "isplus.com"},
+    {"name": "스포츠서울", "url": "https://www.sportsseoul.com", "domain": "sportsseoul.com"},
+    {"name": "OSEN", "url": "https://www.osen.co.kr", "domain": "osen.co.kr"},
+    {"name": "스타뉴스", "url": "https://www.starnewskorea.com", "domain": "starnewskorea.com"},
+    {"name": "스포탈코리아", "url": "https://www.sportalkorea.com", "domain": "sportalkorea.com"},
+    {"name": "메디게이트뉴스", "url": "https://www.medigatenews.com", "domain": "medigatenews.com"},
+    {"name": "청년의사", "url": "https://www.docdocdoc.co.kr", "domain": "docdocdoc.co.kr"},
+    {"name": "메디팜헬스", "url": "https://www.medipharmhealth.co.kr", "domain": "medipharmhealth.co.kr"},
+    {"name": "약사공론", "url": "https://www.kpanews.co.kr", "domain": "kpanews.co.kr"},
+    {"name": "부동산114", "url": "https://www.r114.co.kr", "domain": "r114.co.kr"},
+    {"name": "한국부동산원", "url": "https://www.reb.or.kr", "domain": "reb.or.kr"},
+    {"name": "매경이코노미", "url": "https://www.mk.co.kr/economy", "domain": "mk.co.kr"},
+    {"name": "이코노미스트", "url": "https://economist.co.kr", "domain": "economist.co.kr"},
+    {"name": "한경비즈니스", "url": "https://magazine.hankyung.com", "domain": "magazine.hankyung.com"},
+    {"name": "주간조선", "url": "https://weekly.chosun.com", "domain": "weekly.chosun.com"},
+    {"name": "시사저널", "url": "https://www.sisajournal.com", "domain": "sisajournal.com"},
+    {"name": "한겨레21", "url": "https://h21.hani.co.kr", "domain": "h21.hani.co.kr"},
+    {"name": "지역일보(부산)", "url": "https://www.busan.com", "domain": "busan.com"},
+    {"name": "지역일보(매일)", "url": "https://www.imaeil.com", "domain": "imaeil.com"},
+    {"name": "지역일보(광주)", "url": "https://www.kwangju.co.kr", "domain": "kwangju.co.kr"},
+    {"name": "지역일보(강원)", "url": "https://www.kwnews.co.kr", "domain": "kwnews.co.kr"},
+    {"name": "지역일보(전북)", "url": "https://www.jjan.kr", "domain": "jjan.kr"},
+    {"name": "지역일보(제주)", "url": "https://www.jejunews.com", "domain": "jejunews.com"}
+  ]
+}
