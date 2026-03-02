@@ -1,9 +1,17 @@
-# dangnagui (게시판 검색기)
+# 당나귀 게시판검색기 (dangnagui)
 
 > 임금님귀 v1.1 · copyright by 챠리 (challychoi@me.com)
 
 토픽별 핫키워드·네티즌 의견 실시간 리포트를 생성하는 Windows 데스크톱 앱.  
 Microsoft Fluent 스타일 다크 UI · USB 포터블 · Windows 10/11 지원.
+
+---
+
+## 빠른 설치
+
+**[dangnagui-setup-v1.1.exe](https://github.com/azossy/dangnagui/releases/latest)** 다운로드 → 실행 → 완료!
+
+> 설치 없이 사용하려면 Releases에서 포터블 ZIP을 받아 압축을 풀고 `dangnagui.exe`를 실행하세요.
 
 ---
 
@@ -17,16 +25,16 @@ Microsoft Fluent 스타일 다크 UI · USB 포터블 · Windows 10/11 지원.
 
 ---
 
-## 실행 방법
+## 개발자용
+
+### 소스에서 실행
 
 ```bash
 pip install -r requirements.txt
 python main.py
 ```
 
----
-
-## 빌드 (배포용 EXE + 인스톨러)
+### 빌드 (배포용 EXE + 인스톨러)
 
 ```bash
 build.bat
@@ -35,9 +43,7 @@ build.bat
 - PyInstaller로 `dist\dangnagui\dangnagui.exe` 생성
 - [Inno Setup 6](https://jrsoftware.org/isinfo.php) 설치 시 `Output\dangnagui-setup-v1.1.exe` 인스톨러 자동 생성
 
----
-
-## 프로젝트 구조
+### 프로젝트 구조
 
 ```
 ├── main.py               # 메인 GUI (진입점)
@@ -53,9 +59,7 @@ build.bat
 └── README.md             # 개발자용 문서 (본 파일)
 ```
 
----
-
-## 의존성
+### 의존성
 
 | 패키지 | 용도 |
 |--------|------|
